@@ -4,7 +4,7 @@
   const STORY = window.KROVO_STORY;
   if (!STORY || !Array.isArray(STORY.scenes)) throw Error('story.js not loaded');
   const VERSION = STORY.meta.version || '0.2.0'; // Storage schema version: keep compatible with existing saves.
-  const BUILD_VERSION = '0.5.0';
+  const BUILD_VERSION = '0.6.0';
   const STORAGE = 'krovostok-chat-save-v2';
   const PREF_KEY = 'krovostok-chat-prefs-v2';
   const CONTACTS = {
@@ -17,7 +17,10 @@
     'Томазик': {ab:'Т',a:'#9c8271',b:'#54433a',desc:'магазин'},
     'Алла': {ab:'А',a:'#94758c',b:'#4c4059',desc:'новый контакт'},
     'Старый': {ab:'С',a:'#9e8d78',b:'#514637',desc:'старый знакомый'},
-    'Бармен': {ab:'Б',a:'#9e776a',b:'#4d3b46',desc:'старый номер'}
+    'Бармен': {ab:'Б',a:'#9e776a',b:'#4d3b46',desc:'старый номер'},
+    'Восемь': {ab:'8',a:'#857c71',b:'#3b3633',desc:'старый знакомый'},
+    'Колян': {ab:'К',a:'#6e8b82',b:'#314f4d',desc:'знакомый знакомых'},
+    'Сонный': {ab:'С',a:'#947983',b:'#493a4c',desc:'новый контакт'}
   };
   const el = id => document.getElementById(id);
   const timePattern = /(?:[01]\d|2[0-3]):[0-5]\d/;
@@ -351,10 +354,10 @@
       const choice=getScene().choices[Number(e.key)-1];if(choice){e.preventDefault();chooseChoice(choice)}
     }
   });
-  // Previous builds ended at F12. Reopen that completed save at the newly
-  // appended Saturday scene instead of forcing the player to replay 24 choices.
-  if(game && game.stage==='ended' && STORY.scenes[game.scene]?.id==='F12' &&
-     game.scene+1<STORY.scenes.length && !game.decisions.some(d=>d.scene==='S01')){
+  // A completed earlier build continues at the newly appended chapter instead
+  // of being reset. Both historic endpoints are supported (F12 and S14).
+  if(game && game.stage==='ended' && ['F12','S14'].includes(STORY.scenes[game.scene]?.id) &&
+     game.scene+1<STORY.scenes.length){
     game.messages=game.messages.filter(m=>!(m.type==='sys' &&
       m.text==='Продолжение следует. Эти истории не обязаны заканчиваться одной разгадкой.'));
     game.stage='transition';
