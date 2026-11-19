@@ -53,11 +53,13 @@
     const msg={...event,id:game.seq,time};
     game.messages.push(msg);
     if (event.chat!==game.active && event.type!=='sys') game.unread[event.chat]=(game.unread[event.chat]||0)+1;
-    if (event.type!=='sys' && !event.mine) beep();
+    if (event.type!=='sys' && !event.mine) beep('incoming');
+    updateUnreadIndicator();
     persist();
   }
   function prepareScene(i){
-    game.scene=i;game.stage='intro';game.active=STORY.scenes[i].chat;game.unread[game.active]=0;currentSceneClock();
+    // A new scene may arrive in another chat: NEVER move the user's open conversation.
+    game.scene=i;game.stage='intro';currentSceneClock();
     const sc=getScene();
     game.pending=[{chat:sc.chat,who:'Система',type:'sys',text:sc.title,mine:false},...sc.core.map(m=>eventFrom(m,sc.chat))];
     for(const v of sc.variants||[]) if(matches(v)) game.pending.push(...v.lines.map(m=>eventFrom(m,sc.chat)));
@@ -65,9 +67,12 @@
   }
   function typingDelay(e){
     if (prefs.speed===0 || window.matchMedia('(prefers-reduced-motion: reduce)').matches)return 25;
-    if(e.mine || e.type==='sys')return 130;
-    const base=450+Math.min(900,e.text.length*8);
-    return Math.round(base/(prefs.speed===2?2.5:1));
+    // A human-paced messenger: visible thinking/typing and a readable gap after each bubble.
+    if(e.type==='sys')return prefs.speed===2?180:340;
+    if(e.mine)return prefs.speed===2?360:780;
+    const words=e.text.trim().split(/\s+/).length;
+    const pace=1350 + Math.min(2250,Math.max(e.text.length*15,words*45));
+    return Math.round(pace/(prefs.speed===2?1.9:1));
   }
   function clearRunning(){animationSeq++;if(timer!==null){clearTimeout(timer);timer=null}}
   function runQueue(){
@@ -97,7 +102,7 @@
     if(game.stage==='reply'){
       game.stage='transition';persist();render();
       const t=animationSeq;
-      timer=setTimeout(()=>{if(t!==animationSeq)return;advanceScene()},prefs.speed===0?40:500);
+      timer=setTimeout(()=>{if(t!==animationSeq)return;advanceScene()},prefs.speed===0?40:850);
     }
   }
   function advanceScene(){
@@ -113,6 +118,7 @@
     if(game.stage!=='choice' || game.active!==getScene().chat)return;
     const sc=getScene();
     pushMessage({chat:sc.chat,who:'Вы',type:'text',mine:true,text:choice.echo});
+    beep('outgoing');
     Object.assign(game.flags,choice.set);
     game.decisions.push({scene:sc.id,where:sc.title,chat:sc.chat,title:choice.title,echo:choice.echo});
     game.pending=choice.lines.map(m=>eventFrom(m,sc.chat));
@@ -120,7 +126,7 @@
   }
   function selectChat(chat){
     if(!CONTACTS[chat]) return;
-    game.active=chat;game.unread[chat]=0;persist();
+    game.active=chat;game.unread[chat]=0;updateUnreadIndicator();persist();
     mobileOpened=true;
     el('app').classList.add('show-thread');
     render();scrollBottom(true);
@@ -155,13 +161,14 @@
       else preview.textContent='Нет сообщений';
       body.appendChild(preview);row.appendChild(body);
       if(game.unread[chat]>0){const count=document.createElement('span');count.className='counter';count.textContent=game.unread[chat]>99?'99+':String(game.unread[chat]);row.appendChild(count)}
+      else if(game.stage==='choice' && getScene().chat===chat){row.classList.add('needs-reply');const dot=document.createElement('span');dot.className='reply-dot';dot.setAttribute('aria-label','Можно ответить');row.appendChild(dot)}
       row.addEventListener('click',()=>selectChat(chat));list.appendChild(row);
     }
   }
   function isForward(text){return /^\[переслано/.test(text)}
   function renderMedia(m){
     const card=document.createElement('button');card.type='button';card.className='media-card';
-    const img=document.createElement('img');img.src='assets/photo-head.svg';img.alt='Затемнённая фотография: пакет на столе; подробности скрыты';card.appendChild(img);
+    const img=document.createElement('img');img.src='assets/head-kitchen.jpg';img.alt='Фотография: голова в пакете на кухонном столе';img.loading='lazy';card.appendChild(img);
     const cap=document.createElement('span');cap.className='media-caption';const title=document.createElement('b');title.textContent='Фотография';const info=document.createElement('span');info.textContent='Нажмите, чтобы рассмотреть';cap.append(title,info);card.appendChild(cap);
     card.addEventListener('click',()=>showPhoto(m));return card;
   }
@@ -184,41 +191,41 @@
       if(m.mine){const ticks=document.createElement('span');ticks.className='checkmark';ticks.textContent='✓✓';ticks.setAttribute('aria-label','доставлено');meta.appendChild(ticks)}
       bubble.appendChild(meta);fragment.appendChild(bubble)
     }
+    if(typingChat===game.active){
+      const row=document.createElement('div');row.className='inline-typing';
+      row.setAttribute('aria-label',game.active+' печатает');
+      const dots=document.createElement('span');dots.className='typing-bubble';
+      for(let i=0;i<3;i++)dots.appendChild(document.createElement('i'));
+      row.appendChild(dots);fragment.appendChild(row);
+    }
     thread.replaceChildren(fragment);
     if(shouldScroll)scrollBottom(true);
   }
   function renderInteraction(){
-    const scene=getScene(),isCurrent=game.active===scene.chat;
-    el('progressLabel').textContent='Сцена '+(game.scene+1)+' из '+STORY.scenes.length;
-    const prompt=el('quickTitle'),choices=el('quickReplies'),hint=el('pendingHint'),typing=el('typingRow');
-    choices.replaceChildren();hint.replaceChildren();hint.hidden=true;
-    const typingNow=typingChat===game.active;
-    typing.hidden=!typingNow;el('typingText').textContent=game.active+' печатает…';
+    const scene=getScene(), isCurrent=game.active===scene.chat;
+    const prompt=el('quickTitle'),choices=el('quickReplies');
+    choices.replaceChildren();prompt.hidden=true;
+    el('fakeInputText').textContent='Сообщение';
     if(game.stage==='ended'){
-      prompt.textContent='История на сегодня закончена';
       el('fakeInputText').textContent='Переписка завершена';
-      const replay=document.createElement('button');replay.className='choice-btn';replay.innerHTML='<b>Новая попытка</b><small>Пройти с другими ответами</small>';
-      replay.addEventListener('click',()=>{if(confirm('Начать заново? Текущие решения будут сброшены.'))newGame()});choices.appendChild(replay);return;
+      if(isCurrent){
+        const replay=document.createElement('button');replay.className='choice-btn';
+        replay.textContent='Начать новую историю';
+        replay.addEventListener('click',()=>{if(confirm('Начать заново? Текущие решения будут сброшены.'))newGame()});choices.appendChild(replay);
+      }
+      return;
     }
-    if(game.stage==='intro'||game.stage==='reply'){
-      prompt.textContent='Сообщения приходят';el('fakeInputText').textContent='Подождите ответа…';
-      const skip=document.createElement('button');skip.className='skip-btn';skip.textContent='Показать сообщения сразу';skip.addEventListener('click',skipQueue);choices.appendChild(skip);return
-    }
-    if(game.stage==='transition'){
-      prompt.textContent='Переписка продолжается';el('fakeInputText').textContent='Новое сообщение…';return
-    }
-    if(!isCurrent){
-      prompt.textContent='В другом чате ждут ответа';el('fakeInputText').textContent='Выберите нужный чат';hint.hidden=false;
-      const label=document.createElement('span');label.textContent='Ответ ожидает '+scene.chat+'.';
-      const go=document.createElement('button');go.type='button';go.textContent='Открыть';go.addEventListener('click',()=>selectChat(scene.chat));hint.append(label,go);return
-    }
-    prompt.textContent='Ваш ответ';el('fakeInputText').textContent='Выберите один из вариантов выше';
-    scene.choices.forEach((choice,i)=>{
+    // Other chats have a normal empty compose bar; no buttons, banners or auto-navigation.
+    if(game.stage!=='choice' || !isCurrent)return;
+    el('fakeInputText').textContent='Выберите сообщение выше';
+    scene.choices.forEach(choice=>{
       const b=document.createElement('button');b.type='button';b.className='choice-btn';
-      const tag=document.createElement('b');tag.textContent='Вариант '+(i+1);const text=document.createElement('small');text.textContent=choice.echo;
-      b.append(tag,text);b.title=choice.title;b.addEventListener('click',()=>chooseChoice(choice));choices.appendChild(b);
+      b.textContent=choice.echo;
+      b.title=choice.title;
+      b.addEventListener('click',()=>chooseChoice(choice));choices.appendChild(b);
     });
   }
+
   function render(){
     el('activeName').textContent=game.active;
     const c=CONTACTS[game.active]||{ab:'?',a:'#526371',b:'#293b48'};
@@ -228,17 +235,33 @@
     el('soundButton').classList.toggle('muted',!prefs.sound);
     el('soundButton').setAttribute('aria-pressed',String(prefs.sound));
     el('speedButton').textContent=prefs.speed===0?'∞':prefs.speed+'×';
-    renderList();renderThread();renderInteraction();
+    renderList();renderThread();renderInteraction();updateUnreadIndicator();
   }
-  function beep(){
+  function updateUnreadIndicator(){
+    const total=Object.entries(game.unread).reduce((sum,[name,n])=>sum+(name===game.active?0:n),0);
+    const badge=el('totalUnread');
+    if(badge){badge.hidden=!total;badge.textContent=total>99?'99+':String(total)}
+    document.title=(total?'('+total+') ':'')+'КРОВОСТОК — Переписки';
+  }
+  function beep(kind='incoming'){
     if(!prefs.sound||!audio.ctx||audio.ctx.state!=='running')return;
     try{
       const t=audio.ctx.currentTime,osc=audio.ctx.createOscillator(),gain=audio.ctx.createGain();
-      osc.type='sine';osc.frequency.setValueAtTime(740,t);osc.frequency.exponentialRampToValueAtTime(520,t+.10);
-      gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(.035,t+.01);gain.gain.exponentialRampToValueAtTime(.0001,t+.14);
-      osc.connect(gain);gain.connect(audio.ctx.destination);osc.start(t);osc.stop(t+.15);
+      osc.type='sine';
+      if(kind==='outgoing'){
+        osc.frequency.setValueAtTime(460,t);
+        osc.frequency.exponentialRampToValueAtTime(390,t+.075);
+      }else{
+        osc.frequency.setValueAtTime(740,t);
+        osc.frequency.exponentialRampToValueAtTime(590,t+.12);
+      }
+      gain.gain.setValueAtTime(.0001,t);
+      gain.gain.exponentialRampToValueAtTime(kind==='outgoing'?.012:.026,t+.015);
+      gain.gain.exponentialRampToValueAtTime(.0001,t+.15);
+      osc.connect(gain);gain.connect(audio.ctx.destination);osc.start(t);osc.stop(t+.16);
     }catch{/* audio optional */}
   }
+
   function unlockAudio(){
     if(!prefs.sound)return;
     try{
@@ -253,14 +276,15 @@
   }
   function closeModal(){el('modal').hidden=true}
   function showPhoto(m){showModal('Полученная фотография',box=>{
-    const img=document.createElement('img');img.className='photo-overlay';img.src='assets/photo-head.svg';img.alt='Стилизация: пакет на кухонном столе, без натуралистичных деталей';box.appendChild(img);
+    const img=document.createElement('img');img.className='photo-overlay';img.src='assets/head-kitchen.jpg';img.alt='Фотография головы в пакете на кухонном столе';box.appendChild(img);
     const p=document.createElement('p');p.textContent=m.text;box.appendChild(p);
-    const cap=document.createElement('p');cap.className='caption';cap.textContent='Иллюстрация к переписке. Не фотография реальных событий.';box.appendChild(cap);
+    const cap=document.createElement('p');cap.className='caption';cap.textContent='Вложение из переписки';box.appendChild(cap);
   })}
   function settings(){showModal('Настройки',box=>{
     const info=document.createElement('p');info.textContent='Сообщения появляются по очереди. История и ответы сохраняются локально в этом браузере.';box.appendChild(info);
     const soundRow=document.createElement('div');soundRow.className='setting-row';soundRow.textContent='Звук сообщений';const toggle=document.createElement('button');toggle.textContent=prefs.sound?'Включён':'Выключен';toggle.addEventListener('click',()=>{prefs.sound=!prefs.sound;savePrefs();unlockAudio();toggle.textContent=prefs.sound?'Включён':'Выключен';render()});soundRow.appendChild(toggle);box.appendChild(soundRow);
     const speedRow=document.createElement('div');speedRow.className='setting-row';speedRow.textContent='Скорость сообщений';const speed=document.createElement('button');speed.textContent=prefs.speed===0?'Сразу':prefs.speed+'×';speed.addEventListener('click',()=>{cycleSpeed();speed.textContent=prefs.speed===0?'Сразу':prefs.speed+'×'});speedRow.appendChild(speed);box.appendChild(speedRow);
+    const decisionRow=document.createElement('div');decisionRow.className='setting-row';decisionRow.textContent='История ваших ответов';const journal=document.createElement('button');journal.textContent='Открыть';journal.addEventListener('click',decisionModal);decisionRow.appendChild(journal);box.appendChild(decisionRow);
     const resetRow=document.createElement('div');resetRow.className='setting-row';resetRow.textContent='Начать новую историю';const b=document.createElement('button');b.className='danger';b.textContent='Сбросить прохождение';b.addEventListener('click',()=>{if(confirm('Сбросить сообщения и все решения?')){closeModal();newGame()}});resetRow.appendChild(b);box.appendChild(resetRow);
     const about=document.createElement('p');about.className='caption';about.textContent='Версия '+VERSION+'. Оригинальные игровые диалоги; мотивы песен используются как сюжетные источники. Нет серверной передачи данных.';box.appendChild(about);
   })}
@@ -277,7 +301,6 @@
   el('soundButton').addEventListener('click',()=>{prefs.sound=!prefs.sound;savePrefs();unlockAudio();render();showToast(prefs.sound?'Звук уведомлений включён':'Звук уведомлений выключен')});
   el('speedButton').addEventListener('click',cycleSpeed);
   el('settingsButton').addEventListener('click',settings);
-  el('storyInfo').addEventListener('click',decisionModal);
   el('closeModal').addEventListener('click',closeModal);
   el('modal').addEventListener('click',e=>{if(e.target===el('modal'))closeModal()});
   el('backButton').addEventListener('click',()=>{mobileOpened=false;el('app').classList.remove('show-thread')});

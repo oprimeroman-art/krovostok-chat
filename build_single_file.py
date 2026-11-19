@@ -1,0 +1,21 @@
+from pathlib import Path
+import base64
+root=Path(__file__).resolve().parent
+html=(root/'index.html').read_text(encoding='utf8')
+css=(root/'styles.css').read_text(encoding='utf8')
+story=(root/'story.js').read_text(encoding='utf8')
+app=(root/'app.js').read_text(encoding='utf8')
+jpg=(root/'assets'/'head-kitchen.jpg').read_bytes()
+favicon=(root/'assets'/'favicon.svg').read_bytes()
+photo_uri='data:image/jpeg;base64,'+base64.b64encode(jpg).decode('ascii')
+fav_uri='data:image/svg+xml;base64,'+base64.b64encode(favicon).decode('ascii')
+app=app.replace("'assets/head-kitchen.jpg'",repr(photo_uri))
+html=html.replace('<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">',f'<link rel="icon" type="image/svg+xml" href="{fav_uri}">')
+html=html.replace('<link rel="stylesheet" href="styles.css">',f'<style>\n{css}\n</style>')
+html=html.replace('<script defer src="story.js"></script>','')
+html=html.replace('<script defer src="app.js"></script>','')
+html=html.replace('</body>',f'<script>\n{story}\n</script>\n<script>\n{app}\n</script>\n</body>')
+p=Path('/mnt/data/КРОВОСТОК_Переписки_игра.html')
+p.write_text(html,encoding='utf8')
+(root/'published_index.html').write_text(html,encoding='utf8')
+print(p,p.stat().st_size)
