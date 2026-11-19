@@ -101,3 +101,10 @@
 
 Сюжетные флаги: archive_intro, tape_scope, old_archive, moose_intro, moose_attitude, tape_to_marat, valera_mix, moose_public, rumor_wednesday, tape_archive, bar_archive, old_public, moose_photo, garage_wed, witness_note, mara_wed_final, sergey_wed, wednesday_end.
 Эти флаги меняют доставку сведений, доверие и реакцию людей без общего тайного кукловода. Старые решения и завершения сохраняются.
+
+
+## Второй четверг — версия 0.9 (H01–H18)
+
+По мотивам «Столярки» (CH03), «Пора домой» (ST02), «Столовой» (PR01). Имена чатов, техника, переписки, заложник в мастерской, предметы и повороты — наша вымышленная адаптация, не дословный текст песен. Линия Капитана не предполагает, что он следователь. Линия Столовой гротескна, не требует разъяснения природы компота. Связь Мастера со Старым, Доком и Барменом придумана для игры и не означает общего заговора.
+
+Флаги: master_intro, master_order, master_location, old_master, master_help, master_reply, bar_master, doctor_master_end, thursday_end; captain_tv, captain_photo, captain_evening; canteen_order, canteen_voice, canteen_pickup, canteen_end; sergey_canteen, sergey_thursday. Сохранения W18 возобновляются на H01.
