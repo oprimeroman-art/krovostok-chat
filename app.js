@@ -4,7 +4,7 @@
   const STORY = window.KROVO_STORY;
   if (!STORY || !Array.isArray(STORY.scenes)) throw Error('story.js not loaded');
   const VERSION = STORY.meta.version || '0.2.0'; // Storage schema version: keep compatible with existing saves.
-  const BUILD_VERSION = '0.7.0';
+  const BUILD_VERSION = '0.8.0';
   const STORAGE = 'krovostok-chat-save-v2';
   const PREF_KEY = 'krovostok-chat-prefs-v2';
   const CONTACTS = {
@@ -22,7 +22,9 @@
     'Колян': {ab:'К',a:'#6e8b82',b:'#314f4d',desc:'знакомый знакомых'},
     'Лёха (деревня)': {ab:'Л',a:'#827a68',b:'#44483a',desc:'вернулся в Москву'},
     'Гаражи': {ab:'Г',a:'#867d7c',b:'#423e46',desc:'после драки'},
-    'Сонный': {ab:'С',a:'#947983',b:'#493a4c',desc:'новый контакт'}
+    'Сонный': {ab:'С',a:'#947983',b:'#493a4c',desc:'новый контакт'},
+    'Архив': {ab:'А',a:'#637e89',b:'#284856',desc:'старые записи'},
+    'Лоси': {ab:'Л',a:'#96866f',b:'#4d4140',desc:'ошибся с людьми'}
   };
   const el = id => document.getElementById(id);
   const timePattern = /(?:[01]\d|2[0-3]):[0-5]\d/;
@@ -357,8 +359,8 @@
     }
   });
   // A completed earlier build continues at the newly appended chapter instead
-  // of being reset. Historic endpoints F12, S14 and M16 are supported.
-  if(game && game.stage==='ended' && ['F12','S14','M16'].includes(STORY.scenes[game.scene]?.id) &&
+  // of being reset. Historic endpoints F12, S14, M16 and T18 are supported.
+  if(game && game.stage==='ended' && ['F12','S14','M16','T18'].includes(STORY.scenes[game.scene]?.id) &&
      game.scene+1<STORY.scenes.length){
     game.messages=game.messages.filter(m=>!(m.type==='sys' &&
       m.text==='Продолжение следует. Эти истории не обязаны заканчиваться одной разгадкой.'));

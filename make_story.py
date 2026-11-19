@@ -229,7 +229,10 @@ install_monday(scenes, M, C, V, S, F)
 from tuesday_story import install as install_tuesday
 install_tuesday(scenes, M, C, V, S, F)
 
-base['meta'] = {**base.get('meta',{}), 'title':'КРОВОСТОК — Четверг / Пятница / Выходные / Понедельник / Вторник','version':'0.3.0','scenes':len(scenes), 'author':'Игровая адаптация byGagarin', 'copyright':'Оригинальные игровые диалоги. Полные тексты песен не включены.'}
+from wednesday_story import install as install_wednesday
+install_wednesday(scenes, M, C, V, S, F)
+
+base['meta'] = {**base.get('meta',{}), 'title':'КРОВОСТОК — Четверг / Пятница / Выходные / Понедельник / Вторник / Среда','version':'0.3.0','scenes':len(scenes), 'author':'Игровая адаптация byGagarin', 'copyright':'Оригинальные игровые диалоги. Полные тексты песен не включены.'}
 (OUT/'story.js').write_text('/* Story data: original game dialogue; no copied song lyrics. */\nwindow.KROVO_STORY = '+json.dumps(base,ensure_ascii=False,separators=(',',':'))+';\n',encoding='utf-8')
 (OUT/'data' if False else OUT) 
 print('Scenes:',len(scenes),'choices:',sum(len(s['choices']) for s in scenes),'file size:',(OUT/'story.js').stat().st_size)
