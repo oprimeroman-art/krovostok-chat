@@ -1,11 +1,10 @@
-
 /* КРОВОСТОК — messaging fiction engine. Vanilla JS, local-first, no remote dependencies. */
 (() => {
   'use strict';
   const STORY = window.KROVO_STORY;
   if (!STORY || !Array.isArray(STORY.scenes)) throw Error('story.js not loaded');
   const VERSION = STORY.meta.version || '0.2.0'; // Storage schema version: keep compatible with existing saves.
-  const BUILD_VERSION = '1.1.0';
+  const BUILD_VERSION = '1.2.0';
   const STORAGE = 'krovostok-chat-save-v2';
   const PREF_KEY = 'krovostok-chat-prefs-v2';
   const CONTACTS = {
@@ -34,7 +33,10 @@
     'Стрелок': {ab:'С',a:'#7c887c',b:'#303f3b',desc:'музыка'},
     'Павел': {ab:'П',a:'#887b65',b:'#4e4335',desc:'старый знакомый Зёмы'},
     'Рита': {ab:'Р',a:'#8f7c8d',b:'#48404c',desc:'приёмка ломбарда'},
-    'Лида': {ab:'Л',a:'#6897a1',b:'#244754',desc:'Ливадия'}
+    'Лида': {ab:'Л',a:'#6897a1',b:'#244754',desc:'Ливадия'},
+    'Толя Панкратов': {ab:'Т',a:'#8c8274',b:'#3c4a48',desc:'после грозы'},
+    'Гарик': {ab:'Г',a:'#907868',b:'#493d40',desc:'поминки'},
+    'Дом 14': {ab:'14',a:'#7e6b66',b:'#49343a',desc:'жильцы дома'}
   };
   const el = id => document.getElementById(id);
   const timePattern = /(?:[01]\d|2[0-3]):[0-5]\d/;
@@ -370,7 +372,7 @@
   });
   // Completed saves from earlier chapters resume at the next scene without losing history.
   // Endpoints F12, S14, M16, T18, W18, H18 and R18 are supported.
-  if(game && game.stage==='ended' && ['F12','S14','M16','T18','W18','H18','R18'].includes(STORY.scenes[game.scene]?.id) &&
+  if(game && game.stage==='ended' && ['F12','S14','M16','T18','W18','H18','R18','K18'].includes(STORY.scenes[game.scene]?.id) &&
      game.scene+1<STORY.scenes.length){
     game.messages=game.messages.filter(m=>!(m.type==='sys' &&
       m.text==='Продолжение следует. Эти истории не обязаны заканчиваться одной разгадкой.'));
@@ -383,4 +385,3 @@
   }else newGame();
   window.KROVO_DEBUG={getState:()=>JSON.parse(JSON.stringify(game)),skip:skipQueue,advance:()=>{if(game.stage==='transition')advanceScene()},newGame};
 })();
-
