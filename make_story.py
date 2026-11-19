@@ -220,7 +220,10 @@ e07=by_id['E07']['choices'][1]
 assert e07['id']=='B'
 e07['lines'].append(F('Марат (версии)','Серёга','Серёга разрешил показать фотографию. Имя погибшего неизвестно, адрес не передаю.',media='head'))
 
-base['meta'] = {**base.get('meta',{}), 'title':'КРОВОСТОК — Четверг / Пятница','version':'0.3.0','scenes':len(scenes), 'author':'Игровая адаптация byGagarin', 'copyright':'Оригинальные игровые диалоги. Полные тексты песен не включены.'}
+from weekend_story import install as install_weekend
+install_weekend(scenes, M, C, V, S, F)
+
+base['meta'] = {**base.get('meta',{}), 'title':'КРОВОСТОК — Четверг / Пятница / Выходные','version':'0.3.0','scenes':len(scenes), 'author':'Игровая адаптация byGagarin', 'copyright':'Оригинальные игровые диалоги. Полные тексты песен не включены.'}
 (OUT/'story.js').write_text('/* Story data: original game dialogue; no copied song lyrics. */\nwindow.KROVO_STORY = '+json.dumps(base,ensure_ascii=False,separators=(',',':'))+';\n',encoding='utf-8')
 (OUT/'data' if False else OUT) 
 print('Scenes:',len(scenes),'choices:',sum(len(s['choices']) for s in scenes),'file size:',(OUT/'story.js').stat().st_size)

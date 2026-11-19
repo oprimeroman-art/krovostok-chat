@@ -4,7 +4,7 @@
   const STORY = window.KROVO_STORY;
   if (!STORY || !Array.isArray(STORY.scenes)) throw Error('story.js not loaded');
   const VERSION = STORY.meta.version || '0.2.0'; // Storage schema version: keep compatible with existing saves.
-  const BUILD_VERSION = '0.4.1';
+  const BUILD_VERSION = '0.5.0';
   const STORAGE = 'krovostok-chat-save-v2';
   const PREF_KEY = 'krovostok-chat-prefs-v2';
   const CONTACTS = {
@@ -15,7 +15,9 @@
     'Без имени': {ab:'?',a:'#7e8288',b:'#313943',desc:'неизвестный номер'},
     'Марат (версии)': {ab:'М',a:'#b59a73',b:'#67553d',desc:'сосед'},
     'Томазик': {ab:'Т',a:'#9c8271',b:'#54433a',desc:'магазин'},
-    'Алла': {ab:'А',a:'#94758c',b:'#4c4059',desc:'новый контакт'}
+    'Алла': {ab:'А',a:'#94758c',b:'#4c4059',desc:'новый контакт'},
+    'Старый': {ab:'С',a:'#9e8d78',b:'#514637',desc:'старый знакомый'},
+    'Бармен': {ab:'Б',a:'#9e776a',b:'#4d3b46',desc:'старый номер'}
   };
   const el = id => document.getElementById(id);
   const timePattern = /(?:[01]\d|2[0-3]):[0-5]\d/;
@@ -349,6 +351,15 @@
       const choice=getScene().choices[Number(e.key)-1];if(choice){e.preventDefault();chooseChoice(choice)}
     }
   });
+  // Previous builds ended at F12. Reopen that completed save at the newly
+  // appended Saturday scene instead of forcing the player to replay 24 choices.
+  if(game && game.stage==='ended' && STORY.scenes[game.scene]?.id==='F12' &&
+     game.scene+1<STORY.scenes.length && !game.decisions.some(d=>d.scene==='S01')){
+    game.messages=game.messages.filter(m=>!(m.type==='sys' &&
+      m.text==='Продолжение следует. Эти истории не обязаны заканчиваться одной разгадкой.'));
+    game.stage='transition';
+    persist();
+  }
   if(game){
     render();if(game.stage==='intro'||game.stage==='reply')runQueue();else if(game.stage==='transition')advanceScene();
     el('app').classList.add('show-thread');
