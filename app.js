@@ -1,10 +1,11 @@
+
 /* КРОВОСТОК — messaging fiction engine. Vanilla JS, local-first, no remote dependencies. */
 (() => {
   'use strict';
   const STORY = window.KROVO_STORY;
   if (!STORY || !Array.isArray(STORY.scenes)) throw Error('story.js not loaded');
   const VERSION = STORY.meta.version || '0.2.0'; // Storage schema version: keep compatible with existing saves.
-  const BUILD_VERSION = '0.9.0';
+  const BUILD_VERSION = '1.0.0';
   const STORAGE = 'krovostok-chat-save-v2';
   const PREF_KEY = 'krovostok-chat-prefs-v2';
   const CONTACTS = {
@@ -27,7 +28,10 @@
     'Лоси': {ab:'Л',a:'#96866f',b:'#4d4140',desc:'ошибся с людьми'},
     'Мастер': {ab:'М',a:'#927a62',b:'#3d322e',desc:'столярная мастерская'},
     'Капитан': {ab:'К',a:'#68788a',b:'#29333c',desc:'на службе'},
-    'Столовая': {ab:'С',a:'#ac9982',b:'#55493c',desc:'комплексные обеды'}
+    'Столовая': {ab:'С',a:'#ac9982',b:'#55493c',desc:'комплексные обеды'},
+    'Димон': {ab:'Д',a:'#998476',b:'#554539',desc:'район'},
+    'Оля': {ab:'О',a:'#8c819e',b:'#424559',desc:'кино'},
+    'Стрелок': {ab:'С',a:'#7c887c',b:'#303f3b',desc:'музыка'}
   };
   const el = id => document.getElementById(id);
   const timePattern = /(?:[01]\d|2[0-3]):[0-5]\d/;
@@ -361,9 +365,9 @@
       const choice=getScene().choices[Number(e.key)-1];if(choice){e.preventDefault();chooseChoice(choice)}
     }
   });
-  // A completed earlier build continues at the newly appended chapter instead
-  // of being reset. Historic endpoints F12, S14, M16 and T18 are supported.
-  if(game && game.stage==='ended' && ['F12','S14','M16','T18','W18'].includes(STORY.scenes[game.scene]?.id) &&
+  // Completed saves from earlier chapters resume at the next scene without losing history.
+  // Endpoints F12, S14, M16, T18, W18 and H18 are supported.
+  if(game && game.stage==='ended' && ['F12','S14','M16','T18','W18','H18'].includes(STORY.scenes[game.scene]?.id) &&
      game.scene+1<STORY.scenes.length){
     game.messages=game.messages.filter(m=>!(m.type==='sys' &&
       m.text==='Продолжение следует. Эти истории не обязаны заканчиваться одной разгадкой.'));
@@ -376,3 +380,4 @@
   }else newGame();
   window.KROVO_DEBUG={getState:()=>JSON.parse(JSON.stringify(game)),skip:skipQueue,advance:()=>{if(game.stage==='transition')advanceScene()},newGame};
 })();
+
