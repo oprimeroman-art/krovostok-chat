@@ -3,7 +3,8 @@
   'use strict';
   const STORY = window.KROVO_STORY;
   if (!STORY || !Array.isArray(STORY.scenes)) throw Error('story.js not loaded');
-  const VERSION = STORY.meta.version || '0.2.0';
+  const VERSION = STORY.meta.version || '0.2.0'; // Storage schema version: keep compatible with existing saves.
+  const BUILD_VERSION = '0.4.1';
   const STORAGE = 'krovostok-chat-save-v2';
   const PREF_KEY = 'krovostok-chat-prefs-v2';
   const CONTACTS = {
@@ -39,21 +40,35 @@
   function eventFrom(src, sceneChat){
     const name=normalize(src.who);
     const isSys=src.kind==='sys';
+    const isForward=src.kind==='forward';
     const chat=isSys?sceneChat:(CONTACTS[name]?name:sceneChat);
-    return {chat,who:name,type:isSys?'sys':src.kind==='media'?'media':'text',mine:src.kind==='out',text:String(src.text || '')};
+    return {
+      chat,who:name,
+      type:isSys?'sys':isForward?'forward':src.kind==='media'?'media':'text',
+      mine:isForward?src.sent_by!=='contact':src.kind==='out',
+      text:String(src.text || ''),
+      forwardedFrom:isForward?String(src.from || ''):null,
+      media:isForward?(src.media || null):null
+    };
   }
   function getScene(){return STORY.scenes[game.scene]}
   function matches(variant){return Object.entries(variant.when||{}).every(([k,v]) => game.flags[k]===v)}
   function currentSceneClock(){const m=getScene().title.match(timePattern);if(!m)return;const [h,min]=m[0].split(':').map(Number);game.minuteCounter=h*60+min}
   function stamp(){const n=game.minuteCounter;return String(Math.floor(n/60)%24).padStart(2,'0')+':'+String(n%60).padStart(2,'0')}
   function pushMessage(event){
+    // When a route forwards a photo, the original must exist in the source thread as well.
+    // This also repairs routes where a player didn't ask for the photo in the earlier scene.
+    if(event.type==='forward' && event.media==='head' && event.forwardedFrom==='Серёга' &&
+      !game.messages.some(m=>m.chat==='Серёга' && m.type==='media')){
+      pushMessage({chat:'Серёга',who:'Серёга',type:'media',mine:false,text:'[фото: пакет на кухонном столе]'});
+    }
     game.seq+=1;
     const time=stamp();
-    if (game.seq%3===0)game.minuteCounter+=1;
+    if(game.seq%3===0)game.minuteCounter+=1;
     const msg={...event,id:game.seq,time};
     game.messages.push(msg);
-    if (event.chat!==game.active && event.type!=='sys') game.unread[event.chat]=(game.unread[event.chat]||0)+1;
-    if (event.type!=='sys' && !event.mine) beep('incoming');
+    if(event.chat!==game.active && event.type!=='sys') game.unread[event.chat]=(game.unread[event.chat]||0)+1;
+    if(event.type!=='sys' && !event.mine) beep('incoming');
     updateUnreadIndicator();
     persist();
   }
@@ -69,6 +84,7 @@
     if (prefs.speed===0 || window.matchMedia('(prefers-reduced-motion: reduce)').matches)return 25;
     // A human-paced messenger: visible thinking/typing and a readable gap after each bubble.
     if(e.type==='sys')return prefs.speed===2?180:340;
+    if(e.type==='forward')return prefs.speed===2?180:410;
     if(e.mine)return prefs.speed===2?360:780;
     const words=e.text.trim().split(/\s+/).length;
     const pace=1350 + Math.min(2250,Math.max(e.text.length*15,words*45));
@@ -157,7 +173,7 @@
       head.append(name,time);body.appendChild(head);
       const preview=document.createElement('span');preview.className='chat-preview';
       if(typingChat===chat){preview.classList.add('typing');preview.textContent='печатает…'}
-      else if(last){preview.textContent=last.type==='media'?'Фотография':last.text.replace(/\s+/g,' ').slice(0,65)}
+      else if(last){preview.textContent=isForward(last)?('↪ '+(forwardOrigin(last)||'Пересланное')+': '+(hasForwardedPhoto(last)?'Фотография':visibleMessageText(last).replace(/\s+/g,' ').slice(0,46))):last.type==='media'?'Фотография':last.text.replace(/\s+/g,' ').slice(0,65)}
       else preview.textContent='Нет сообщений';
       body.appendChild(preview);row.appendChild(body);
       if(game.unread[chat]>0){const count=document.createElement('span');count.className='counter';count.textContent=game.unread[chat]>99?'99+':String(game.unread[chat]);row.appendChild(count)}
@@ -165,7 +181,22 @@
       row.addEventListener('click',()=>selectChat(chat));list.appendChild(row);
     }
   }
-  function isForward(text){return /^\[переслано/.test(text)}
+  function isForward(m){return m.type==='forward'||/^\[переслано/i.test(m.text)}
+  function forwardOrigin(m){
+    if(m.forwardedFrom)return m.forwardedFrom;
+    // Preserve labels in previously saved playthroughs from v0.4.
+    const old=m.text.match(/^\[переслано из чата «([^»]+)»/i);
+    return old?old[1]:'';
+  }
+  function hasForwardedPhoto(m){
+    return m.type==='forward' ? m.media==='head' :
+      isForward(m) && /^\[переслано из чата «Серёга»:/i.test(m.text) && /фото|фотограф/i.test(m.text);
+  }
+  function visibleMessageText(m){
+    // Old v0.4 saves used bracketed placeholder prose; remove the wrapper in the UI.
+    const old=m.text.match(/^\[переслано из чата «[^»]+»:\s*([^\]]+)\]$/i);
+    return old?old[1]:m.text;
+  }
   function renderMedia(m){
     const card=document.createElement('button');card.type='button';card.className='media-card';
     const img=document.createElement('img');img.src='assets/head-kitchen.jpg';img.alt='Фотография: голова в пакете на кухонном столе';img.loading='lazy';card.appendChild(img);
@@ -180,12 +211,17 @@
     for(const m of messages){
       const bubble=document.createElement('article');bubble.className='bubble'+(m.mine?' mine':'')+(m.type==='sys'?' sys':'');
       if(m.type==='sys'){bubble.textContent=m.text;fragment.appendChild(bubble);continue}
-      if(m.type==='media'){bubble.appendChild(renderMedia(m))}
-      else{
-        if(isForward(m.text)){
-          const span=document.createElement('div');span.className='forwarded';span.textContent='Пересланное сообщение';bubble.appendChild(span)
-        }
-        const content=document.createElement('div');content.className='message-text';content.textContent=m.text;bubble.appendChild(content)
+      if(isForward(m)){
+        bubble.classList.add('forward-bubble');
+        const source=forwardOrigin(m);
+        const label=document.createElement('div');label.className='forwarded';
+        label.textContent=source?'Переслано от '+source:'Пересланное сообщение';
+        bubble.appendChild(label);
+      }
+      if(m.type==='media'||hasForwardedPhoto(m))bubble.appendChild(renderMedia(m));
+      if(m.type!=='media'&&m.text){
+        const content=document.createElement('div');content.className='message-text';content.textContent=visibleMessageText(m);
+        bubble.appendChild(content);
       }
       const meta=document.createElement('div');meta.className='meta';const tm=document.createElement('time');tm.textContent=m.time;meta.appendChild(tm);
       if(m.mine){const ticks=document.createElement('span');ticks.className='checkmark';ticks.textContent='✓✓';ticks.setAttribute('aria-label','доставлено');meta.appendChild(ticks)}
@@ -286,7 +322,7 @@
     const speedRow=document.createElement('div');speedRow.className='setting-row';speedRow.textContent='Скорость сообщений';const speed=document.createElement('button');speed.textContent=prefs.speed===0?'Сразу':prefs.speed+'×';speed.addEventListener('click',()=>{cycleSpeed();speed.textContent=prefs.speed===0?'Сразу':prefs.speed+'×'});speedRow.appendChild(speed);box.appendChild(speedRow);
     const decisionRow=document.createElement('div');decisionRow.className='setting-row';decisionRow.textContent='История ваших ответов';const journal=document.createElement('button');journal.textContent='Открыть';journal.addEventListener('click',decisionModal);decisionRow.appendChild(journal);box.appendChild(decisionRow);
     const resetRow=document.createElement('div');resetRow.className='setting-row';resetRow.textContent='Начать новую историю';const b=document.createElement('button');b.className='danger';b.textContent='Сбросить прохождение';b.addEventListener('click',()=>{if(confirm('Сбросить сообщения и все решения?')){closeModal();newGame()}});resetRow.appendChild(b);box.appendChild(resetRow);
-    const about=document.createElement('p');about.className='caption';about.textContent='Версия '+VERSION+'. Оригинальные игровые диалоги; мотивы песен используются как сюжетные источники. Нет серверной передачи данных.';box.appendChild(about);
+    const about=document.createElement('p');about.className='caption';about.textContent='Версия '+BUILD_VERSION+'. Оригинальные игровые диалоги; мотивы песен используются как сюжетные источники. Нет серверной передачи данных.';box.appendChild(about);
   })}
   function decisionModal(){showModal('Ваши решения',box=>{
     const p=document.createElement('p');p.textContent='Выбранные ответы влияют на то, кто что узнал и как собеседники реагируют в следующих сценах.';box.appendChild(p);
