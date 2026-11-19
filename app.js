@@ -4,7 +4,7 @@
   const STORY = window.KROVO_STORY;
   if (!STORY || !Array.isArray(STORY.scenes)) throw Error('story.js not loaded');
   const VERSION = STORY.meta.version || '0.2.0'; // Storage schema version: keep compatible with existing saves.
-  const BUILD_VERSION = '0.6.0';
+  const BUILD_VERSION = '0.7.0';
   const STORAGE = 'krovostok-chat-save-v2';
   const PREF_KEY = 'krovostok-chat-prefs-v2';
   const CONTACTS = {
@@ -20,6 +20,8 @@
     'Бармен': {ab:'Б',a:'#9e776a',b:'#4d3b46',desc:'старый номер'},
     'Восемь': {ab:'8',a:'#857c71',b:'#3b3633',desc:'старый знакомый'},
     'Колян': {ab:'К',a:'#6e8b82',b:'#314f4d',desc:'знакомый знакомых'},
+    'Лёха (деревня)': {ab:'Л',a:'#827a68',b:'#44483a',desc:'вернулся в Москву'},
+    'Гаражи': {ab:'Г',a:'#867d7c',b:'#423e46',desc:'после драки'},
     'Сонный': {ab:'С',a:'#947983',b:'#493a4c',desc:'новый контакт'}
   };
   const el = id => document.getElementById(id);
@@ -355,8 +357,8 @@
     }
   });
   // A completed earlier build continues at the newly appended chapter instead
-  // of being reset. Both historic endpoints are supported (F12 and S14).
-  if(game && game.stage==='ended' && ['F12','S14'].includes(STORY.scenes[game.scene]?.id) &&
+  // of being reset. Historic endpoints F12, S14 and M16 are supported.
+  if(game && game.stage==='ended' && ['F12','S14','M16'].includes(STORY.scenes[game.scene]?.id) &&
      game.scene+1<STORY.scenes.length){
     game.messages=game.messages.filter(m=>!(m.type==='sys' &&
       m.text==='Продолжение следует. Эти истории не обязаны заканчиваться одной разгадкой.'));

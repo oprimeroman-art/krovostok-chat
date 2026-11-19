@@ -43,7 +43,7 @@ with sync_playwright() as p:
         page.on('pageerror', lambda e: failures.append(str(e)))
         open_game(page)
         scene_count = page.evaluate('window.KROVO_STORY.scenes.length')
-        assert scene_count == 38, scene_count
+        assert scene_count == 72, scene_count
         for i in range(scene_count):
             c = overrides.get(i, 0 if route=='rescue_public_retracted' else 2)
             state = assert_scene_choice(page, i, c)
@@ -56,7 +56,7 @@ with sync_playwright() as p:
         page.evaluate('window.KROVO_DEBUG.advance()')
         state=page.evaluate("window.KROVO_DEBUG.getState()")
         assert state['stage']=='ended', (route,state['stage'])
-        assert len(state['decisions'])==38,(route,len(state['decisions']))
+        assert len(state['decisions'])==72,(route,len(state['decisions']))
         assert len(state['messages'])>=210,(route,len(state['messages']))
         # Consequence check: with correct choices Shompol survived; without them not confirmed.
         alla_text = ' '.join(m['text'] for m in state['messages'] if m['chat']=='Алла')

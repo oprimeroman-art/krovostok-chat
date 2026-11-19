@@ -9,7 +9,7 @@ html=html.replace('</body>', '<script>'+ (root/'story.js').read_text()+'</script
 
 with sync_playwright() as p:
     browser=p.chromium.launch(headless=True, executable_path='/usr/bin/chromium', args=['--no-sandbox','--allow-file-access-from-files'])
-    for which, choices in [('first',[0]*38),('mixed',[2,1,0,2,2,0,1,1,0,2,0,1]+[2,1,0,1,2,0,2,1,0,1,2,2]+[1,2,1,0,2,1,0,2,0,1,0,2,1,0])]:
+    for which, choices in [('first',[0]*72),('mixed',[2,1,0,2,2,0,1,1,0,2,0,1]+[2,1,0,1,2,0,2,1,0,1,2,2]+[1,2,1,0,2,1,0,2,0,1,0,2,1,0]+[2,1,0,0,2,2,1,0,1,2,2,1,0,1,2,0]+[2,0,1,1,2,0,1,2,0,1,2,0,2,1,0,2,1,0])]:
         context=browser.new_context(viewport={'width':1380,'height':800},accept_downloads=True)
         page=context.new_page();errors=[]
         page.on('pageerror',lambda e: errors.append(str(e)))
@@ -45,7 +45,7 @@ with sync_playwright() as p:
         page.wait_for_timeout(10)
         g=page.evaluate('window.KROVO_DEBUG.getState()')
         assert g['stage']=='ended',g['stage']
-        assert len(g['decisions'])==38,(which,len(g['decisions']))
+        assert len(g['decisions'])==72,(which,len(g['decisions']))
         assert len(g['messages'])>130,(which,len(g['messages']))
         assert not errors,(which,errors)
         page.screenshot(path=str(root / 'tests' / f'desktop_{which}.png'))
