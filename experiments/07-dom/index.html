@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ДОМ, КОТОРЫЙ СЛЫШИТ</title>
+<style>
+:root{--paper:#ddd4b9;--ink:#25291f;--rub:#a14b38;--blue:#496b68;--dim:#8b8977;--gold:#b18d4a}
+*{box-sizing:border-box}html{background:#d8cfb1}body{margin:0;color:var(--ink);background:var(--paper);font-family:Georgia,serif}
+button{cursor:pointer;font:inherit;color:inherit}button:focus-visible,[role=button]:focus-visible{outline:3px dashed var(--rub);outline-offset:4px}
+#paper{min-height:100dvh;position:relative;isolation:isolate;background:repeating-linear-gradient(0deg,transparent 0 4px,#6b68550b 4px 5px),repeating-linear-gradient(90deg,transparent 0 7px,#6b685506 7px 8px),linear-gradient(110deg,#ebe2c9,#cfc4a9)}
+#paper:after{content:"";pointer-events:none;position:fixed;inset:0;opacity:.28;background-image:radial-gradient(#38382b33 .6px,transparent .75px);background-size:5px 5px;mix-blend-mode:multiply}
+header{position:relative;z-index:1;padding:20px clamp(16px,3vw,45px) 16px;display:flex;justify-content:space-between;gap:20px;border-bottom:4px double #444b3b}
+.brand{display:flex;align-items:baseline;gap:18px}.brand b{font:900 clamp(24px,4vw,53px)/.9 Impact,'Arial Narrow',sans-serif;letter-spacing:.035em}.brand small{font:10px/1.4 'Courier New',monospace;letter-spacing:.12em}
+.top-info{display:flex;gap:23px;align-items:center;text-align:right;font:11px 'Courier New',monospace;letter-spacing:.08em}.top-info strong{display:block;font-size:18px;font-weight:900}
+main{position:relative;z-index:1;display:grid;grid-template-columns:minmax(320px,1.55fr) minmax(290px,.8fr);gap:clamp(18px,3vw,52px);padding:25px clamp(15px,3vw,45px) 30px;max-width:1700px;margin:auto}
+.left-head{display:flex;justify-content:space-between;gap:12px;align-items:end;margin-bottom:16px}.left-head h1{font:900 clamp(25px,3.5vw,49px)/.9 Impact,sans-serif;margin:3px 0;letter-spacing:.016em}.overline{font:10px 'Courier New',monospace;color:var(--rub);letter-spacing:.14em;font-weight:700}.left-head p{font:12px/1.3 Georgia,serif;max-width:240px;margin:0;text-align:right;color:#575848}
+.house{position:relative;display:grid;grid-template-rows:repeat(5,minmax(86px,1fr));gap:6px;padding:16px 15px 21px;min-height:535px;background:#b8b49b;background-image:repeating-linear-gradient(90deg,#353d3422 0 1px,transparent 1px 35px),repeating-linear-gradient(0deg,#353d3410 0 1px,transparent 1px 16px);border:5px solid #383f34;box-shadow:9px 11px 0 #55564935;overflow:hidden}
+.house:before{content:"РАЗРЕЗ / ДОМ № 17-Б";position:absolute;top:0;right:0;padding:3px 7px;background:#353f36;color:#e6dfc9;font:8px 'Courier New',monospace;letter-spacing:.15em}
+.floor{display:grid;grid-template-columns:36px minmax(0,1fr) 80px minmax(0,1fr);gap:5px;align-items:stretch;min-height:0}
+.level{writing-mode:vertical-rl;transform:rotate(180deg);border-right:1px dashed #59604d;text-align:center;font:900 12px 'Courier New',monospace;color:#59584b;letter-spacing:.05em}
+.room{border:2px solid #333d32;position:relative;min-width:0;overflow:hidden;cursor:pointer;background:#e0d7bd;box-shadow:inset 0 0 0 4px #d0c7aa;transition:background .15s,transform .15s}
+.room:hover{background:#f5ead1}.room.selected{background:#ede0b5;box-shadow:inset 0 0 0 3px #c14a31,0 0 0 2px #b13a23}
+.room.dark{background:#878d78;color:#212b28}.room.dark:after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(135deg,#202d2517 0 4px,transparent 4px 8px)}
+.room .number{position:absolute;top:6px;left:8px;font:900 clamp(13px,1.4vw,21px) Impact,'Arial Narrow',sans-serif;letter-spacing:.03em}
+.room .purpose{position:absolute;right:8px;top:8px;font:9px 'Courier New',monospace;max-width:65%;text-align:right;overflow:hidden}
+.room .door{position:absolute;bottom:0;left:50%;transform:translateX(-50%);height:12px;width:36px;border:2px solid #26392f;border-bottom:0;background:#80927e;z-index:1}
+.room .door.locked{background:#a94d37;border-top:5px solid #7b3226}
+.room .lamp{position:absolute;top:2px;left:49%;width:11px;height:11px;background:#e7bc63;border:1px solid #796d46;border-radius:50%;box-shadow:0 0 17px 4px #e6b75c6c}
+.room.dark .lamp{background:#565c52;box-shadow:none}
+.shaft{border-left:3px double #454d3a;border-right:3px double #454d3a;background:#a7a68f;position:relative;display:flex;justify-content:center;align-items:center}
+.shaft:before,.shaft:after{content:"";position:absolute;top:-4px;bottom:-4px;width:1px;background:#50584755}.shaft:before{left:15px}.shaft:after{right:15px}
+.shaft .stairs{font:9px/1.1 'Courier New',monospace;color:#555c4c;position:absolute;top:4px;left:3px}
+.cabin{position:absolute;bottom:12px;width:48px;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:4px double #3e5045;background:#e4d8b6;box-shadow:4px 3px 0 #2f45353b;z-index:3}
+.cabin strong{font:900 15px Impact,sans-serif}.cabin small{font:8px 'Courier New',monospace}
+.person{display:inline-flex;align-items:center;justify-content:center;position:relative;z-index:4;width:30px;height:36px;margin:0 3px;background:var(--pc,#6a5a49);color:#f3e7ce;clip-path:polygon(30% 0,70% 0,77% 22%,100% 41%,93% 100%,6% 100%,0 41%,23% 22%);font:900 12px Impact,sans-serif;letter-spacing:.02em;filter:drop-shadow(2px 2px 0 #1d2c27b0)}
+.person.carry:after{content:"";position:absolute;right:0;bottom:1px;width:9px;height:11px;background:#e9b754;border:2px solid #543b27}
+.room .actors{position:absolute;display:flex;gap:0;bottom:14px;left:6px;max-width:100%;overflow:visible;align-items:end}.shaft .actors{position:absolute;bottom:6px;left:4px;z-index:5;display:flex;align-items:end}.room .room-label{position:absolute;bottom:5px;right:6px;font:8px 'Courier New',monospace;letter-spacing:.08em}
+.floor .power{font:9px 'Courier New',monospace;color:#faf1da;background:#435347;padding:4px 2px;cursor:pointer;border:1px solid #354439}
+.floor .power.off{background:#a25340}
+.house-foot{display:flex;gap:17px;align-items:center;justify-content:space-between;margin-top:12px;font:10px 'Courier New',monospace;color:#666452}
+.house-foot strong{color:#963e29}
+.right{border-left:2px solid #676d57;padding-left:clamp(17px,2vw,33px)}
+.filetag{font:10px 'Courier New',monospace;letter-spacing:.17em;color:#a24c37;font-weight:900}
+.casehead{font:900 clamp(28px,3vw,44px)/.94 Impact,'Arial Narrow',sans-serif;margin:10px 0 10px;letter-spacing:.03em}
+.caseintro{font:16px/1.4 Georgia,serif;color:#3a4036;max-width:530px}.objective{border:3px double #606b59;padding:14px 16px;margin-top:16px;background:#eee4cb}
+.objective strong{display:block;font:900 10px 'Courier New',monospace;letter-spacing:.15em;color:#9c4531}.objective p{margin:8px 0 0;font:italic 16px/1.35 Georgia,serif}
+.tools{margin-top:20px}.toolshead{font:900 10px 'Courier New',monospace;letter-spacing:.14em;color:#a24c37;border-bottom:1px solid #5d6858;padding-bottom:8px}.toolrow{display:flex;gap:9px;flex-wrap:wrap;margin-top:11px}
+.toolrow button{min-height:42px;min-width:74px;background:#e9dfc6;border:1px solid #555f50;padding:8px 10px;font:900 11px 'Courier New',monospace;letter-spacing:.045em;box-shadow:3px 3px 0 #353e3230}.toolrow button:hover{background:#d5c49a}.toolrow button:active{transform:translate(2px,2px);box-shadow:none}.toolrow button.on{background:#454f40;color:#f4ead4}.toolrow button:disabled{opacity:.45;cursor:not-allowed}
+.residents{margin-top:19px}.relationship-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:9px}.relation{border-bottom:1px dashed #828b76;padding:6px 0;font:10px/1.3 "Courier New",monospace}.relation strong{color:#a44b34}.relation .pos{color:#345b49}.relation .neg{color:#9d483b}.inspection{margin-top:19px;min-height:95px;background:#c7c1a8;border-left:5px solid #995040;padding:10px 15px}.inspection strong{font:900 12px 'Courier New',monospace}.inspection p{font:14px/1.38 Georgia,serif;margin:7px 0}
+.notes{margin-top:18px}.notes h3{font:900 10px 'Courier New',monospace;letter-spacing:.15em;border-bottom:2px solid #585e4b;padding-bottom:7px}.log{max-height:235px;overflow:auto;scrollbar-color:#7a765e transparent}.entry{display:grid;grid-template-columns:36px 1fr;gap:8px;border-bottom:1px dashed #928a73;padding:7px 0;font:13px/1.4 Georgia,serif}.entry em{font:900 11px 'Courier New',monospace;color:#a14b38;font-style:normal}
+.end{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:#26322bdf;padding:16px}.end[hidden]{display:none}.paperend{width:min(590px,96vw);padding:35px clamp(20px,4vw,54px);background:#e8ddc2;color:#263329;border:8px double #485044;box-shadow:15px 16px 0 #0005;transform:rotate(-1deg)}.paperend .stamp{font:900 11px 'Courier New',monospace;color:#a44a33;letter-spacing:.15em}.paperend h2{font:900 clamp(40px,8vw,78px)/.88 Impact,sans-serif;margin:17px 0}.paperend p{font:17px/1.45 Georgia,serif}.paperend button{background:#ad5139;color:#f2e5c7;font:900 12px 'Courier New',monospace;padding:15px 20px;border:0}
+.how{position:fixed;z-index:14;right:20px;bottom:18px;background:#29382e;color:#f0e6cf;padding:10px 13px;font:10px 'Courier New',monospace;max-width:270px;box-shadow:3px 3px 0 #1118}.how button{background:none;color:#dec59a;border:0;text-decoration:underline;font-size:10px}
+@media(max-width:900px){main{grid-template-columns:1fr}.right{border-left:0;border-top:2px solid #676d57;padding:15px 0 40px}.house{min-height:530px}.brand small{display:none}.top-info{gap:10px}.room .purpose{font-size:8px}}
+@media(max-width:480px){header{padding:13px 10px}.brand b{font-size:28px}.top-info{font-size:9px}.top-info strong{font-size:14px}main{padding:15px 8px}.house{padding:12px 5px 16px;min-height:515px}.floor{grid-template-columns:17px minmax(0,1fr) 51px minmax(0,1fr);gap:3px}.level{font-size:9px}.shaft .stairs{font-size:6px}.person{width:24px;height:29px;margin:0 1px;font-size:10px}.cabin{width:36px;height:39px}.room .purpose{font-size:7px;right:3px;top:5px}.room .number{font-size:15px;left:5px}.room .door{width:25px}.house-foot{font-size:8px}.how{left:10px;right:10px;max-width:none;bottom:8px}.left-head p{max-width:130px;font-size:10px}}
+</style></head><body><div id="paper">
+<header><div class="brand"><b>ДОМ, КОТОРЫЙ СЛЫШИТ</b><small>17-Б / МАКЕТ СУЩЕСТВОВАНИЯ<br>ЭКСПЕРИМЕНТ № 07</small></div><div class="top-info"><div>ХОД<strong id="turn">00</strong></div><div>ШУМ ДОМА<strong id="noise">0 / 10</strong></div></div></header>
+<main><section><div class="left-head"><div><span class="overline">ДОМОВАЯ КНИГА / ЖИВОЙ РАЗРЕЗ</span><h1 id="daytitle">ВТОРНИК. ПОСЛЕ ОБЕДА.</h1></div><p>Никакого таймера. Дом меняется после каждого твоего вмешательства.</p></div><div class="house" id="house"></div><div class="house-foot"><span>Нажми на комнату: выбери её. Свет и двери меняются отдельно.</span><strong id="condition">ДОМ ЖИВЁТ</strong></div></section>
+<aside class="right"><div class="filetag" id="caseNum">ДЕЛО 01 / 03</div><h2 class="casehead" id="caseTitle">НЕ ТОМУ ЧЕЛОВЕКУ</h2><p class="caseintro" id="caseIntro"></p><div class="objective"><strong>НЕОБХОДИМО, НО НИКТО НЕ ПРОСИЛ</strong><p id="goal"></p></div>
+<div class="tools"><div class="toolshead">РУКОЯТКИ И РУЧНОЕ УПРАВЛЕНИЕ</div><div class="toolrow" id="roomTools"><button id="door" type="button">ОТКРЫТЬ ДВЕРЬ</button><button id="light" type="button">ВЫКЛЮЧИТЬ СВЕТ</button><button id="favor" type="button">ПОПРОСИТЬ ЖИЛЬЦА</button></div><div class="toolshead" style="margin-top:18px">ЛИФТ / КАКОЙ ЭТАЖ ПОДАТЬ</div><div class="toolrow" id="liftTools"></div><div class="toolshead" style="margin-top:18px">ДОМОФОН / ОТВЛЕЧЬ НА ЗВОНОК</div><div class="toolrow"><button type="button" id="call0">В ПОДЪЕЗД</button><button type="button" id="call4">НА ЧЕРДАК</button><button type="button" id="peek">ПОНАБЛЮДАТЬ</button></div></div>
+<div class="residents"><div class="toolshead">ЛЮДИ ЭТОГО ДОМА / ПОМНЯТ ТЕБЯ</div><div id="relationships" class="relationship-list"></div></div><div class="inspection"><strong id="selectedLabel">КОМНАТА НЕ ВЫБРАНА</strong><p id="selectedDetail">Тронь стену этого дома. Посмотри, кто внутри. Даже без твоего участия они куда-то идут.</p></div>
+<div class="notes"><h3>ДОМ ГОВОРИТ / ПОСЛЕДНИЕ СОБЫТИЯ</h3><div class="log" id="log"></div></div>
+<div class="toolrow" style="margin-top:22px"><button id="restart">ПЕРЕИГРАТЬ ДЕЛО</button><button id="nextCase">ДРУГОЙ ДЕНЬ</button></div>
+</aside></main></div>
+<div id="end" class="end" hidden><div class="paperend"><div class="stamp" id="endStamp">АКТ / СЛУЧИЛОСЬ</div><h2 id="endTitle"></h2><p id="endText"></p><button id="endAgain">ЕЩЁ ОДИН ДЕНЬ</button></div></div>
+<div class="how" id="how">Трогай двери, свет, лифт и домофон. Каждый такой поступок двигает всех жильцов на один ход. Можно просто наблюдать. <button id="closeHow">УБРАТЬ ПОДСКАЗКУ</button></div>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const cases=[
+{title:"НЕ ТОМУ ЧЕЛОВЕКУ",intro:"Курьер принёс свёрток на третий этаж. Инспектор знает про свёрток, но не знает, кому он нужен. Знает ли курьер — отдельный вопрос.",goal:"Свёрток должен оказаться в квартире 33. Инспектор не должен его забрать.",target:"A3",carrier:0,watch:4,alarm:0},
+{title:"НИКОГО НЕТ ДОМА",intro:"Женщина из квартиры 42 просит впустить брата. Тот пришёл без ключей и почему-то избегает соседку. Инспектор уже в подъезде.",goal:"Пропусти гостя в квартиру 42, не дав инспектору перехватить его у двери.",target:"B4",carrier:0,watch:2,alarm:1},
+{title:"ЧУЖАЯ КВИТАНЦИЯ",intro:"В подвале оставили конверт. За ним пришёл человек с первого этажа, но нужен он совсем не ему. Инспектор проверяет соседние квартиры.",goal:"Проведи конверт из подвала до квартиры 21 и не отдай его инспектору.",target:"A2",carrier:-1,watch:3,alarm:1}
+];
+let MEMORY={r:0,n:0,j:0,c:0,i:0}; const colors={c:"#965039",i:"#455e60",r:"#6e6752",n:"#7b7354",j:"#47634f"};
+let S,caseIndex=0;
+const names={c:"ПОСЫЛЬНЫЙ",i:"ИНСПЕКТОР",r:"ЖИЛЕЦ",n:"СОСЕДКА",j:"ДВОРНИК"};
+const roomNames={A4:"41",B4:"42",A3:"33",B3:"34",A2:"21",B2:"22",A1:"11",B1:"12",A0:"ВЕСТИБЮЛЬ",B0:"ДВОР",M:"ПОДВАЛ"};
+const purpose={A4:"пустая",B4:"квартира",A3:"квартира",B3:"сушилка",A2:"пустая",B2:"приёмная",A1:"мастерская",B1:"склад",A0:"вахта",B0:"выход",M:"техэтаж"};
+function init(){
+const C=cases[caseIndex];
+S={turn:0,noise:0,selected:C.target,case:C,finished:false,lift:0,lights:[true,true,true,true,true],locks:{A4:true,B4:true,A3:true,B3:false,A2:true,B2:false,A1:false,B1:false,A0:false,B0:false,M:true},people:{
+c:{floor:C.carrier,room:"shaft",cargo:true,pause:1,alive:true},
+i:{floor:C.watch,room:"shaft",focus:C.watch,delay:0,alive:true},
+r:{floor:Number(C.target.slice(1)),room:C.target,alive:true},
+n:{floor:4,room:"A4",alive:true},j:{floor:0,room:"A0",alive:true}
+},log:[],lastIntercom:-4,lead:0,seen:0,relations:{...MEMORY},favors:{n:0,j:0,r:0},residentFocus:"",sideTask:0};
+const ground=document.createElement("div");$("house").replaceChildren();
+for(let f=4;f>=0;f--){const floor=document.createElement("div");floor.className="floor";floor.id="floor"+f;
+const mark=document.createElement("div");mark.className="level";mark.textContent=f===0?"ЦОКОЛЬ":f+" ЭТАЖ";floor.append(mark);
+for(const side of ["A","S","B"]){if(side==="S"){const shaft=document.createElement("div");shaft.className="shaft";shaft.id="shaft"+f;const stairs=document.createElement("span");stairs.className="stairs";stairs.textContent="ЛЕСТ.";shaft.append(stairs);const actors=document.createElement("div");actors.className="actors";actors.id="hallactors"+f;shaft.append(actors);floor.append(shaft);continue;}
+const id=side+f;const el=document.createElement("div");el.className="room";el.id="room"+id;el.tabIndex=0;el.setAttribute("role","button");el.innerHTML='<span class="number">'+roomNames[id]+'</span><span class="purpose">'+purpose[id]+'</span><span class="lamp"></span><div class="actors" id="actors'+id+'"></div><div class="door" id="door'+id+'"></div><span class="room-label">'+(side==="A"?"ЛЕВАЯ":"ПРАВАЯ")+'</span>';el.addEventListener("click",()=>select(id));el.addEventListener("keydown",e=>{if(e.key==="Enter")select(id)});floor.append(el)}$("house").append(floor)}
+for(let f=0;f<=4;f++){const b=document.createElement("button");b.type="button";b.id="lift"+f;b.textContent="↕ "+f;b.addEventListener("click",()=>moveLift(f));$("liftTools").append(b)}
+note("План дома. Никто не знает, что ты собираешься делать.");if(caseIndex>0)note("Жильцы узнают тебя. У каждого осталось своё мнение после прошлой истории.");
+$("caseNum").textContent="ДЕЛО "+String(caseIndex+1).padStart(2,"0")+" / 03";$("caseTitle").textContent=C.title;$("caseIntro").textContent=C.intro;$("goal").textContent=C.goal;$("daytitle").textContent=["ВТОРНИК. ПОСЛЕ ОБЕДА.","ПЯТНИЦА. ЕЩЁ НЕ ВЕЧЕР.","ВОСКРЕСЕНЬЕ. ПОДВАЛ."][caseIndex];$("end").hidden=true;render();
+}
+function note(msg){S.log.unshift({turn:S.turn,msg});S.log=S.log.slice(0,9)}
+function relation(id,amount){S.relations[id]=Math.max(-4,Math.min(5,(S.relations[id]||0)+amount));MEMORY[id]=S.relations[id]}
+function favorAction(){if(S.finished)return;const id=S.residentFocus;if(!id){note("Сначала выбери жильца, нажав на его силуэт.");render();return}const p=S.people[id];if(!p||p.floor<0){note("Этот человек сейчас недоступен.");render();return}const goodwill=S.relations[id]||0;if(goodwill<-2){note(names[id]+" не хочет с тобой связываться после прошлых дел.");step("denied");return}
+if(id==="n"){S.people.i.focus=4;S.people.i.delay=3;note("Соседка позвала инспектора разбираться с шумом на четвёртом. Он отвлёкся.");relation("n",-1);S.favors.n++;}
+else if(id==="j"){S.locks[S.case.target]=false;note("Дворник открыл служебным ключом дверь "+roomNames[S.case.target]+". Долг теперь за тобой.");relation("j",-1);S.favors.j++;}
+else if(id==="r"){S.locks[S.case.target]=false;note("Жилец услышал просьбу и открыл нужную дверь. Но теперь запомнил тебя.");relation("r",1);S.favors.r++;}
+else if(id==="c"){S.people.c.pause=0;note("Посыльный повторил адрес и собрался с силами. Надеется, что ты не подставишь его.");relation("c",1);}
+else if(id==="i"){S.people.i.focus=0;S.people.i.delay=2;note("Инспектор отправился проверять цоколь. Внимание к тебе выросло.");relation("i",-1);}
+step("favor");}
+function focusResident(id){if(!S.people[id])return;S.residentFocus=id;S.selected=S.people[id].room!=="shaft"?S.people[id].room:("A"+S.people[id].floor);note("Ты обратил внимание на человека: "+names[id]+". Отношение "+(S.relations[id]>0?"доброжелательное":S.relations[id]<0?"настороженное":"нейтральное")+".");render()}
+function select(id){S.selected=id;render()}
+function adjacent(a,b){return Math.abs(a-b)===1}
+function moveLift(f){if(S.finished||S.lift===f)return;const old=S.lift;S.lift=f;note("Лифт прошёл с "+old+" на "+f+" этаж. Его слышно всем.");S.noise=Math.min(10,S.noise+1);step("lift")}
+function doorAction(){if(S.finished)return;const id=S.selected;if(!id||!Object.prototype.hasOwnProperty.call(S.locks,id))return;S.locks[id]=!S.locks[id];note((S.locks[id]?"Заперта":"Открыта")+" дверь "+roomNames[id]+".");step("door")}
+function lightAction(){if(S.finished)return;const f=Number(S.selected.slice(1));if(!Number.isInteger(f)||f<0||f>4)return;S.lights[f]=!S.lights[f];note((S.lights[f]?"Включили":"Погасили")+" свет на "+f+" этаже.");step("light")}
+function intercom(f){if(S.finished)return;if(S.turn-S.lastIntercom<3){note("Домофон ещё занят. Можно подождать.");render();return}S.lastIntercom=S.turn;S.people.i.focus=f;S.people.i.delay=2;S.noise=Math.min(10,S.noise+1);note("Домофон звонит на "+(f===0?"цоколе":"чердаке")+". Инспектор идёт проверять.");step("intercom")}
+function step(kind){
+if(S.finished)return;
+S.turn++;
+const C=S.case,c=S.people.c,i=S.people.i,r=S.people.r,n=S.people.n;
+const targetFloor=Number(C.target.slice(1));
+const moveAllowed=S.lights[c.floor]!==false;
+if(c.alive&&c.cargo){
+if(c.floor===targetFloor){
+ if(!S.locks[C.target]){c.room=C.target;c.cargo=false;r.cargo=true;note("Свёрток передан в квартире "+roomNames[C.target]+".");}
+ else{note("Посыльный у "+roomNames[C.target]+", но дверь заперта.");c.pause++;}
+}else{
+ if(!moveAllowed){c.pause++;if(c.pause%2===0)note("Посыльный замер на тёмной лестнице.");}
+ else if(c.floor<targetFloor){if(S.lift===c.floor&&Math.abs(targetFloor-c.floor)>1&&kind==="lift"){c.floor=S.lift}else{c.floor++;}c.room="shaft"}
+ else if(c.floor>targetFloor){c.floor--;c.room="shaft"}
+}}
+if(S.turn%3===0){const prev=n.floor;n.floor=n.floor===4?3:4;n.room=n.floor===4?"A4":"shaft";if(prev!==n.floor)note("Соседка вышла на лестницу и прислушивается.");}
+if(S.turn%4===0){S.people.j.floor=S.people.j.floor===0?1:0;S.people.j.room=S.people.j.floor===0?"A0":"shaft"}
+if(S.turn%3===0&&i.delay===0){i.focus=(i.focus+2)%5}
+if(i.floor!==i.focus){i.floor+=Math.sign(i.focus-i.floor)}else if(i.delay>0){i.delay--}
+if(S.turn%2===0&&i.delay===0&&c.cargo&&Math.abs(i.floor-c.floor)>=2){i.focus=c.floor;note("Инспектор услышал шаги и сменил маршрут.");}
+if(c.cargo&&i.floor===c.floor&&S.lights[c.floor]&&i.delay===0){
+ S.seen++;
+ if(S.seen>=2){c.cargo=false;i.cargo=true;note("Инспектор остановил посыльного и забрал свёрток.");relation("i",1);relation("c",-1);finish(false,"Свёрток изъят. У инспектора теперь больше вопросов, чем у тебя ответов.")}
+ else note("Инспектор заметил посыльного. Ещё один такой взгляд — и тот не уйдёт.");
+}else if(S.seen>0&&i.floor!==c.floor){S.seen=0}
+if(c.floor===4&&S.people.n.floor===4&&c.cargo&&S.turn%2===0){S.noise=Math.min(10,S.noise+1);note("Соседка увидела свёрток и начала придумывать историю.");relation("n",-1);}
+if(S.noise>=9&&!S.finished){note("Шум в доме слишком сильный: чужие двери открываются сами.");const ids=Object.keys(S.locks).filter(x=>x[0]!=="M");S.locks[ids[(S.turn*3)%ids.length]]=false;S.noise=6}
+if(r.cargo&&!S.finished){relation("r",2);relation("c",1);finish(true,"Дверь закрылась за посыльным. Инспектор так и не узнал, куда исчез свёрток. Дом никому ничего не объяснил.");}
+render();
+}
+function finish(win,msg){S.finished=true;$("end").hidden=false;$("endStamp").textContent=win?"АКТ / ДОСТАВЛЕНО":"АКТ / ПЕРЕХВАЧЕНО";$("endTitle").textContent=win?"ДОМ СОХРАНИЛ":"ДОМ ВЫДАЛ";$("endText").textContent=msg+" На это ушло "+S.turn+" вмешательств. Остальные жильцы продолжают жить. Отношения с людьми сохраняются между днями."}
+function observe(){if(S.finished)return;note("Ты не вмешался. Но жизнь дома продолжилась.");step("wait")}
+function render(){
+$("turn").textContent=String(S.turn).padStart(2,"0");$("noise").textContent=S.noise+" / 10";
+for(let f=0;f<=4;f++){
+ for(const side of ["A","B"]){const id=side+f,el=$("room"+id);el.classList.toggle("dark",!S.lights[f]);el.classList.toggle("selected",S.selected===id);$("door"+id).classList.toggle("locked",S.locks[id]);$("actors"+id).replaceChildren()}
+ $("hallactors"+f).replaceChildren();
+ const b=$("lift"+f);b.classList.toggle("on",S.lift===f);b.textContent=(S.lift===f?"■ ":"↕ ")+f}
+ document.querySelectorAll(".cabin").forEach(x=>x.remove());const cabin=document.createElement("div");cabin.className="cabin";cabin.innerHTML='<strong>ЛИФТ</strong><small>'+S.lift+' ЭТАЖ</small>';$("shaft"+S.lift).append(cabin);
+ for(const [id,p] of Object.entries(S.people)){const actor=document.createElement("span");actor.className="person"+(p.cargo?" carry":"");actor.style.setProperty("--pc",colors[id]);actor.textContent=id.toUpperCase();actor.title=names[id]+(p.cargo?" — несёт свёрток":"")+". Нажми, чтобы выбрать.";actor.tabIndex=0;actor.setAttribute("role","button");actor.onclick=(ev)=>{ev.stopPropagation();focusResident(id)};actor.onkeydown=(ev)=>{if(ev.key==="Enter"){ev.stopPropagation();focusResident(id)}};if(p.room!=="shaft"&&p.room.slice(1)==String(p.floor)&&$("actors"+p.room))$("actors"+p.room).append(actor);else if(p.floor>=0&&p.floor<=4)$("hallactors"+p.floor).append(actor)}
+ const id=S.selected,can=Object.prototype.hasOwnProperty.call(S.locks,id);$("door").disabled=!can;$("light").disabled=!can;
+ $("door").textContent=can?(S.locks[id]?"ОТКРЫТЬ "+roomNames[id]:"ЗАПЕРЕТЬ "+roomNames[id]):"ДВЕРЬ";
+ const f=can?Number(id.slice(1)):-1;$("light").textContent=f>=0?(S.lights[f]?"ПОГАСИТЬ ЭТАЖ "+f:"ЗАЖЕЧЬ ЭТАЖ "+f):"СВЕТ";
+ $("selectedLabel").textContent=can?"КОМНАТА "+roomNames[id]+" / "+(S.locks[id]?"ДВЕРЬ ЗАПЕРТА":"ДВЕРЬ ОТКРЫТА"):"КОМНАТА НЕ ВЫБРАНА";
+ const present=Object.entries(S.people).filter(([k,p])=>p.room===id).map(([k,p])=>names[k]);
+ $("selectedDetail").textContent=can?(present.length?"Внутри: "+present.join(", ")+". ":"Внутри никого. ")+(S.lights[f]?"Лампа горит. ":"Темно. ")+(id===S.case.target?"Сюда ждут свёрток.":""):"Выбери помещение в разрезе дома.";
+ $("relationships").replaceChildren();for(const [id,val] of Object.entries(S.relations)){const el=document.createElement("div");el.className="relation";el.innerHTML="<strong>"+names[id]+"</strong> / <span class="+(val>0?"pos":val<0?"neg":"neutral")+">"+(val>0?"+":"")+val+"</span>";$("relationships").append(el)}$("favor").textContent=S.residentFocus?"ПОПРОСИТЬ: "+names[S.residentFocus]:"ВЫБРАТЬ ЖИЛЬЦА";$("log").replaceChildren();for(const item of S.log){const e=document.createElement("div");e.className="entry";const t=document.createElement("em");t.textContent=String(item.turn).padStart(2,"0");const s=document.createElement("span");s.textContent=item.msg;e.append(t,s);$("log").append(e)}
+ $("condition").textContent=S.finished?"ДЕЛО ЗАКРЫТО":S.seen?"ИНСПЕКТОР ПРИСМАТРИВАЕТСЯ":"ДОМ ЖИВЁТ";
+ $("nextCase").textContent="ДРУГОЙ ДЕНЬ";
+}
+$("favor").onclick=favorAction;$("door").onclick=doorAction;$("light").onclick=lightAction;$("call0").onclick=()=>intercom(0);$("call4").onclick=()=>intercom(4);$("peek").onclick=observe;$("restart").onclick=init;$("nextCase").onclick=()=>{caseIndex=(caseIndex+1)%cases.length;init()};$("endAgain").onclick=()=>{caseIndex=(caseIndex+1)%cases.length;init()};$("closeHow").onclick=()=>$("how").remove();
+init();
+window.DOM_GAME={getState:()=>JSON.parse(JSON.stringify(S)),step,init,select,doorAction,lightAction,intercom,observe,focusResident,favorAction};
+})();
+</script></body></html>
