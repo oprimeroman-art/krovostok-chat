@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#eee9de">
+  <meta name="description" content="КРОВОСТОК — интерактивная криминально-абсурдная история в переписках. Выбирайте ответы. Чужие истории продолжаются без вас.">
+  <title>КРОВОСТОК — Номера</title>
+  <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
+  <link rel="stylesheet" href="../../styles.css"
+  <link rel="stylesheet" href="shell.css">
+  <script defer src="../../story.js"></script>
+  <script defer src="../../second_thursday.js"></script>
+  <script defer src="../../next_friday.js"></script>
+  <script defer src="../../third_saturday.js"></script>
+  <script defer src="../../fourth_sunday.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="sidebar" id="sidebar" aria-label="Список переписок">
+    <header class="sidebar-head">
+      <div class="brand"><span class="brand-glyph">К</span><div><b>НОМЕРА</b><small>Кровосток / эксперимент 03</small></div></div>
+      <button class="icon-btn" id="settingsButton" title="Настройки" aria-label="Настройки">⚙</button>
+    </header>
+    <div class="search-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg><input id="search" type="search" placeholder="Поиск по чатам" aria-label="Поиск по чатам" autocomplete="off"></div>
+    <div class="chat-list" id="chatList" role="list"></div><button id="closeContacts" type="button" class="contacts-close">Закрыть список</button>
+  </aside>
+  <main class="conversation" id="conversation">
+    <header class="conversation-head"><button type="button" id="contactsToggle" class="nav-trigger" aria-label="Открыть переписки"><span class="nav-dots">≡</span><span class="nav-word">Все номера</span></button>
+      <button class="icon-btn back-btn" id="backButton" aria-label="Назад к чатам"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg><span class="back-counter" id="totalUnread" hidden></span></button>
+      <div class="avatar big" id="activeAvatar" aria-hidden="true">С</div>
+      <div class="chat-identity"><b id="activeName">Серёга</b><small id="activeStatus">был недавно</small></div>
+      <div class="head-actions"><button id="notesToggle" type="button" class="notes-toggle" title="Заметки о собеседнике">Заметки</button><button id="soundButton" class="icon-btn" title="Звук уведомлений" aria-label="Включить или выключить звук"><svg id="soundIcon" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path class="sound-waves" d="M15 9a5 5 0 0 1 0 6m2.5-9a9 9 0 0 1 0 12"/></svg></button><button id="speedButton" class="icon-btn speed-btn" title="Скорость переписки" aria-label="Сменить скорость">1×</button></div>
+    </header>
+    <div class="thread-scroll" id="threadScroll"><div id="thread" class="thread" aria-live="polite" aria-relevant="additions"></div></div>
+    <div class="interaction" id="interaction">
+      <div id="quickTitle" hidden></div>
+      <div class="compose-wrap" id="composeWrap">
+        <div class="quick-replies" id="quickReplies"></div>
+        <div class="compose-line">
+          <button type="button" id="composeChevron" class="compose-chevron" title="Варианты ответа" aria-label="Показать возможные ответы">+</button>
+          <input id="draftInput" type="text" autocomplete="off" spellcheck="false" placeholder="Напиши, что ответить…" aria-label="Сообщение">
+          <button type="button" id="sendDraft" class="send-draft" aria-label="Отправить ответ">Отправить</button>
+        </div>
+      </div>
+      <span id="fakeInputText" hidden></span>
+    </div>
+  </main>
+</div>
+<button id="contactsShade" class="contacts-shade" type="button" aria-label="Закрыть список контактов"></button>
+<aside id="notesPanel" class="notes-panel" hidden aria-label="Личные заметки">
+  <header><span>Личная записная книжка</span><button id="notesClose" type="button" aria-label="Закрыть заметки">×</button></header>
+  <h2 id="noteName">Серёга</h2>
+  <p>Что тебе известно об этом человеке? Эти записи видишь только ты.</p>
+  <textarea id="noteText" rows="8" placeholder="Свои версии, имена, долги, подозрения…" aria-label="Заметки о контакте"></textarea>
+  <button type="button" id="pinContact" class="pin-contact">Отметить как важный</button>
+  <h3>Что ты ему отвечал</h3><div id="contactDecisions" class="contact-decisions"></div>
+</aside>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="overlay" id="modal" hidden><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><button id="closeModal" class="modal-close" aria-label="Закрыть">×</button><h2 id="modalTitle">Настройки</h2><div id="modalContent"></div></div></div>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"КРОВОСТОК — Переписки","genre":"Interactive fiction","inLanguage":"ru","gamePlatform":"Web Browser"}</script>
+</body>
+</html>
