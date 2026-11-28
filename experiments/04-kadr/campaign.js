@@ -320,6 +320,11 @@ function compose(s,k){const n=s.contacts[k].node,f=s.flags;
  if(a.who==='marat'&&s.flags.nail_publicity!=='spread'&&id==='M11')lines=[line('Я не стал публиковать про Восемь. Уже достижение, да?'),line('Теперь другой человек пишет, будто знает его жертв. С фотографией незнакомых людей. Мне это куда, кроме корзины?')];
  if(id==='F08'&&!f.publicRumor)lines=[line('Я вчера чуть не написал людям про голову. Потом подумал: мне самому половины не рассказали, а я уже пресс-секретарь.'),line('Зато в районном чате без меня нашли пятнадцать совпадений и сломанный лифт. Может, не я один такой талантливый.')];
  if(id==='U16'&&!s.contacts.pavel.known)lines=lines.filter(x=>!x.text.includes('Павел'));
+ if(id==='S04'&&s.details?.items?.matchbox?.done)lines.unshift(line('Ты коробок видел. Это у Немана брал, на ВДНХ. Я его ещё тогда в куртке забыл.'));
+ if(id==='M10'&&s.details?.items?.barphone?.done)lines.unshift(line('Помнишь счёт, который вместе смотрели? Вот за него снова перевели. Другой номер.'));
+ if(id==='W15'&&s.details?.items?.cassette?.done)lines.unshift(line('Ты сам до конца прокрутил. Там уже ничего нет, я с той пометкой и сохраню.'));
+ if(id==='R11'&&s.details?.items?.tickets?.done)lines.unshift(line('Соседние места, ты сам видел. И билет я ему уже обещала. Пусть приходит.'));
+ if(id==='K17'&&s.details?.items?.hotelkey?.done)lines.unshift(line('Ключ в журнал завернула. Клеймо ты тоже разглядел — от старого корпуса, точно наш.'));
  return {title:a.title,prose:a.prose,lines:lines.map(x=>({who:x.who&&x.who!=='Система'&&x.who.replace(' (версии)','')!==H.PEOPLE[k].name?x.who.replace(' (версии)',''):undefined,text:cleanText(x.text,k)})),shot:a.shot,place:days[a.day]+' / '+a.place};
 }
 function setChoice(s,a,c){const f=s.flags;if(a.id==='K02'&&s.now>a.at+25)f.pawnLate=true;Object.assign(f,c.set);s.campaign.answers[a.id]=c.id;s.campaign.done.push(a.id);releaseIntroductions(s);

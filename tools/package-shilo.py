@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 OUT=Path(sys.argv[1]).resolve() if len(sys.argv)>1 else ROOT.parent/'releases'
 OUT.mkdir(parents=True,exist_ok=True)
-VERSION='v9'
+VERSION='v10'
 FULL=OUT/('SHILO-Full-'+VERSION);DEMO=OUT/('SHILO-Demo-'+VERSION)
 for target in (FULL,DEMO):
  if target.exists():shutil.rmtree(target)
@@ -24,7 +24,7 @@ shutil.copy2(FULL/'index.html',FULL/'source-materials/legacy-index.html')
 for target in (FULL,DEMO):
  (target/'index.html').write_text(redirect,encoding='utf-8')
  (target/'START.bat').write_bytes(b'@echo off\r\nstart "" "%~dp0index.html"\r\n')
-for name in ['index.html','prototype.js','prototype.css','opening.js','sound.js','relations.js','mark.svg']:
+for name in ['index.html','prototype.js','prototype.css','opening.js','sound.js','relations.js','details.js','mark.svg']:
  shutil.copy2(fullgame/name,demogame/name)
 resolved=json.loads(subprocess.check_output(['node','-e',"require('./experiments/04-kadr/campaign-data.js');require('./experiments/04-kadr/campaign.js');console.log(JSON.stringify({people:{killer:SHILO_CAMPAIGN.people.killer},scenes:Object.values(SHILO_CAMPAIGN.scenes).filter(a=>a.day===0)}));"],cwd=ROOT))
 (demogame/'campaign-data.js').write_text('globalThis.SHILO_CAMPAIGN_DATA='+json.dumps(resolved,ensure_ascii=False,separators=(',',':'))+';\n',encoding='utf-8')
@@ -44,11 +44,13 @@ root.SHILO_CAMPAIGN={people:data.people,scenes,bind:h=>H=h,boot,tick,compose,opt
 })(typeof window==='undefined'?globalThis:window);
 ''',encoding='utf-8')
 cast=['serega','dok','valerik','shurik','marat','tomazik','alla','sosed','killer']
+p=demogame/'details.js';source=p.read_text();start=source.index('const definitions=');end=source.index('function item(s,id)');firstday=subprocess.check_output(['node','-e',"console.log(JSON.stringify({groceries:require('./experiments/04-kadr/details.js').definitions.groceries}));"],cwd=ROOT,text=True).strip();p.write_text(source[:start]+'const definitions='+firstday+';\n'+source[end:],encoding='utf-8')
 (demogame/'art').mkdir();
 for name in ['cover.webp','condensed.ttf','FONT-LICENSE.txt']+[k+suffix for k in cast for suffix in ['.webp','-small.webp']]:
  if (fullgame/'art'/name).is_file():shutil.copy2(fullgame/'art'/name,demogame/'art'/name)
+(demogame/'art/details').mkdir();shutil.copy2(fullgame/'art/details/groceries.webp',demogame/'art/details/groceries.webp')
 shutil.copytree(fullgame/'media',demogame/'media')
-p=demogame/'prototype.js';s=p.read_text().replace("shilo-opening-v2","shilo-demo-v1");s=s.replace("aft.append(button('В главное меню',goHome,'next'));", "if(state.flags.demoFinished){const full=node('a','next','Открыть полную версию →');full.href='https://oprimeroman-art.github.io/krovostok-chat/experiments/04-kadr/?v=9';full.target='_blank';full.rel='noopener';aft.append(full);}aft.append(button('В главное меню',goHome,'next'));");s=s.replace('История по мотивам песен «Кровостока». 18+. Одиннадцать дней: от четверга, шестого, до воскресенья, шестнадцатого. Самостоятельные истории связаны встречами и твоими решениями. Старое сохранение можно продолжить.','Демоверсия. Первый четверг, шестое: кухня Серёги, звонки знакомых и дом у реки. Твои решения меняют этот день. Продолжение — в полной версии. Сохранения демоверсии отдельные. 18+.');p.write_text(s,encoding='utf-8')
+p=demogame/'prototype.js';s=p.read_text().replace("shilo-opening-v2","shilo-demo-v1");s=s.replace("aft.append(button('В главное меню',goHome,'next'));", "if(state.flags.demoFinished){const full=node('a','next','Открыть полную версию →');full.href='https://oprimeroman-art.github.io/krovostok-chat/experiments/04-kadr/?v=10';full.target='_blank';full.rel='noopener';aft.append(full);}aft.append(button('В главное меню',goHome,'next'));");s=s.replace('История по мотивам песен «Кровостока». 18+. Одиннадцать дней: от четверга, шестого, до воскресенья, шестнадцатого. Самостоятельные истории связаны встречами и твоими решениями. Старое сохранение можно продолжить.','Демоверсия. Первый четверг, шестое: кухня Серёги, звонки знакомых и дом у реки. Твои решения меняют этот день. Продолжение — в полной версии. Сохранения демоверсии отдельные. 18+.');p.write_text(s,encoding='utf-8')
 p=demogame/'index.html';s=p.read_text().replace('<title>ШИЛО — Чужая история</title>','<title>ШИЛО — Демоверсия</title>').replace('КРИМИНАЛЬНЫЙ ГРАФИЧЕСКИЙ РОМАН</p>','КРИМИНАЛЬНЫЙ ГРАФИЧЕСКИЙ РОМАН / ДЕМОВЕРСИЯ</p>').replace('Одиннадцать дней чужих историй и твоих решений.','Первый четверг: кухня Серёги и дом у реки. Демоверсия.');p.write_text(s,encoding='utf-8')
 readme='''# ШИЛО — Чужая история
 
@@ -59,16 +61,16 @@ readme='''# ШИЛО — Чужая история
 
 Для разработки и стабильного адреса сохранений: запусти в корневой папке `python -m http.server 8080` и открой http://localhost:8080/. Саму игру можно разместить на любом статическом хостинге, включая GitHub Pages. Путь игры: `experiments/04-kadr/`.
 
-Управление: выбор мышью / 1–4, пробел — пропуск доступного ожидания. «Связи» открывают карту знакомств и передачи информации; портрет — сведения и переход к разговору. «Записи» — полученные сведения и история. Просмотр карты и записей не тратит игровое время. Настройки звука находятся в меню. Музыка на повторе, сигналы сообщений настраиваются отдельно.
+Управление: выбор мышью / 1–4, пробел — пропуск доступного ожидания. «Связи» открывают карту знакомств и передачи информации; портрет — сведения и переход к разговору. «Записи» — полученные сведения и история. Небольшие предметные вставки открываются нажатием. Рассмотренные мелочи можно снова открыть в «Записях». Просмотр карты и записей не тратит игровое время. Настройки звука находятся в меню. Музыка на повторе, сигналы сообщений настраиваются отдельно.
 
 Прогресс сохраняется в этом браузере. При переносе на другой домен сохранение само не переносится. Полная и демонстрационная версии используют разные ключи прогресса. Новая игра сбрасывает прогресс выбранной версии.
 
 {contents}
 
-Сборка v9, 28 ноября 2026. byGagarin.
+Сборка v10, 28 ноября 2026. byGagarin.
 '''
-(FULL/'README-START.md').write_text(readme.format(edition='Полная текущая версия: одиннадцать дней, от четверга, шестого, до воскресенья, шестнадцатого. Все сюжетные маршруты текущей игры и финалы.',contents='В архиве сохранён весь проект репозитория, включая прежние эксперименты и исходные сценарии. Корневая стартовая страница направляет в актуальную игру. Прежняя корневая HTML-страница сохранена в source-materials/legacy-index.html как исходный материал. Документация и проверки текущей игры находятся в experiments/04-kadr/. Рабочая версия: https://oprimeroman-art.github.io/krovostok-chat/experiments/04-kadr/?v=9.'),encoding='utf-8')
-(DEMO/'README-START.md').write_text(readme.format(edition='Демоверсия: весь первый четверг. Находка Серёги, выбор получателя снимка, окно разговора с Валериком, звонок Шурика, возможная утечка, Томазик, Алла и дом у реки. Вечерние разговоры и остановка перед следующим днём.',contents='Демонстрация содержит собственные исходники, оформление и музыку. Последующие дни, их финалы и изображения в архив не включены. Разговор с заказчиком Валерика открывается только при соответствующем решении; потому доступные персонажи и события в разных прохождениях различаются. Исходная песня — основа, знакомства и альтернативные решения — игровая адаптация. Полная версия: https://oprimeroman-art.github.io/krovostok-chat/experiments/04-kadr/?v=9.'),encoding='utf-8')
+(FULL/'README-START.md').write_text(readme.format(edition='Полная текущая версия: одиннадцать дней, от четверга, шестого, до воскресенья, шестнадцатого. Все сюжетные маршруты текущей игры и финалы.',contents='В архиве сохранён весь проект репозитория, включая прежние эксперименты и исходные сценарии. Корневая стартовая страница направляет в актуальную игру. Прежняя корневая HTML-страница сохранена в source-materials/legacy-index.html как исходный материал. Документация и проверки текущей игры находятся в experiments/04-kadr/. Рабочая версия: https://oprimeroman-art.github.io/krovostok-chat/experiments/04-kadr/?v=10.'),encoding='utf-8')
+(DEMO/'README-START.md').write_text(readme.format(edition='Демоверсия: весь первый четверг. Находка Серёги, выбор получателя снимка, окно разговора с Валериком, звонок Шурика, возможная утечка, Томазик, Алла и дом у реки. Вечерние разговоры и остановка перед следующим днём.',contents='Демонстрация содержит собственные исходники, оформление и музыку. Последующие дни, их финалы и изображения в архив не включены. Разговор с заказчиком Валерика открывается только при соответствующем решении; потому доступные персонажи и события в разных прохождениях различаются. Исходная песня — основа, знакомства и альтернативные решения — игровая адаптация. Полная версия: https://oprimeroman-art.github.io/krovostok-chat/experiments/04-kadr/?v=10.'),encoding='utf-8')
 for target in (FULL,DEMO):
  archive=OUT/(target.name+'.zip')
  with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as z:
