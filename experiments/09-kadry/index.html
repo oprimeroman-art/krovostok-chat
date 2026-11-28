@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#11110f">
+<title>КРОВОСТОК — КАДР / эксперимент 09</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="grain"></div>
+<header class="topbar">
+  <a class="brand" href="./"><span class="crown">♛</span>КРОВОСТОК</a>
+  <span class="edition">КАДР / ИНТЕРАКТИВНАЯ ПОСТАНОВКА</span>
+  <div class="top-meta"><span id="clock">09:04</span><i>—</i><span id="chapter">ЧЕТВЕРГ</span></div>
+  <button class="voices" id="voicesBtn">ВСЕ ГОЛОСА <b>5</b></button>
+</header>
+<main class="layout">
+  <section class="art-panel" aria-label="Сцена">
+    <div class="scene-tag"><span>ЭПИЗОД I</span><i>/</i><span id="sceneNo">КАДР 01</span></div>
+    <div class="artwork" id="artwork">
+      <svg class="scene-svg" viewBox="0 0 900 760" role="img" aria-label="Серёга на кухне, пакет на столе">
+        <defs>
+          <linearGradient id="window" x2="0" y2="1"><stop stop-color="#f45126"/><stop offset="1" stop-color="#8f2d1d"/></linearGradient>
+          <pattern id="tiles" width="72" height="72" patternUnits="userSpaceOnUse"><path d="M0 0H72V72H0Z" fill="none" stroke="#1b1b18" stroke-width="3"/><path d="M8 8L64 64M64 8L8 64" stroke="#e9cda0" opacity=".14" stroke-width="2"/></pattern>
+          <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="2" seed="8"/><feColorMatrix values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 .11 0"/></filter>
+        </defs>
+        <rect width="900" height="760" fill="#22221e"/>
+        <path d="M0 0H900V470H0Z" fill="#523528"/>
+        <path d="M430 0H900V400H430Z" fill="url(#window)" stroke="#171816" stroke-width="20"/>
+        <path d="M650 0V400M430 205H900" stroke="#171816" stroke-width="18"/>
+        <path d="M455 230H875V385H455Z" fill="#171816" opacity=".45"/>
+        <path d="M0 0H420V470H0Z" fill="#6a3b2b"/>
+        <rect x="0" y="350" width="430" height="120" fill="url(#tiles)" opacity=".55"/>
+        <path d="M0 495L900 440V760H0Z" fill="#9b5535"/>
+        <path d="M0 530L900 470M0 650L900 590" stroke="#231d18" stroke-width="7" opacity=".6"/>
+        <!-- Серёга: намеренно плакатный, угловатый силуэт -->
+        <path d="M0 760L0 500Q25 360 130 285Q170 130 335 92Q480 70 550 210L580 470Q520 565 470 760Z" fill="#0c0e0d"/>
+        <path d="M120 275Q140 100 310 78Q450 60 510 190L470 300L410 360L360 520L180 520L95 400Z" fill="#111412"/>
+        <path d="M180 190Q250 125 380 155L460 245L430 360L370 435L260 420L190 330Z" fill="#ead7ad"/>
+        <path d="M180 210L250 175L320 190L370 245L315 260L270 240L220 265Z" fill="#111412"/>
+        <path d="M360 278L430 290L405 310L360 305Z" fill="#111412"/>
+        <path d="M350 365L455 345L430 375L360 388Z" fill="#111412"/>
+        <path d="M265 425L420 430L390 520L280 540Z" fill="#d9c49b"/>
+        <path d="M300 480L420 480L395 500L310 500Z" fill="#151714"/>
+        <path d="M140 525L480 510L600 760H0Z" fill="#a83c25"/>
+        <path d="M150 550L260 570L330 760H205Z" fill="#ead7ad"/>
+        <path d="M420 555L500 530L590 760H470Z" fill="#171a17"/>
+        <!-- table + bag -->
+        <path d="M230 575L850 535L900 605L290 675Z" fill="#d7bd91" stroke="#171816" stroke-width="12"/>
+        <path d="M290 675L900 605V760H330Z" fill="#743b28" stroke="#171816" stroke-width="12"/>
+        <path d="M495 360L590 370L685 575L470 610L420 470Z" fill="#f1dfba" stroke="#6b4c36" stroke-width="8"/>
+        <path d="M495 360Q540 320 590 370L685 575Q560 630 470 610L420 470Z" fill="#e9d8b5" opacity=".75"/>
+        <path d="M490 390Q545 420 605 390" fill="none" stroke="#a83c25" stroke-width="12"/>
+        <path d="M485 455Q560 420 635 465L620 565Q545 600 490 555Z" fill="#171816" opacity=".88"/>
+        <path d="M515 470L590 455L610 520L530 550Z" fill="#b9aa8c" opacity=".55"/>
+        <path d="M490 365Q535 305 590 370" fill="none" stroke="#f3e5c7" stroke-width="13"/>
+        <path d="M710 495Q750 460 805 500V560H710Z" fill="#171816"/>
+        <path d="M730 500V455Q760 425 790 455V500" fill="none" stroke="#171816" stroke-width="14"/>
+        <path d="M0 0H900V760H0Z" filter="url(#rough)" opacity=".38"/>
+      </svg>
+      <div class="art-caption"><span>КУХНЯ · УТРО</span><span>ЧЕТВЕРГ / 09:04</span></div>
+    </div>
+    <div class="art-bottom"><span>01 / 090</span><span>НЕОБЪЯСНИМОЕ — ЕЩЁ НЕ ЗНАЧИТ СВЯЗАННОЕ</span></div>
+  </section>
+  <section class="dialogue-panel">
+    <div class="eyebrow"><span class="live-dot"></span><span id="location">09:04 — КВАРТИРА СЕРЁГИ</span></div>
+    <div class="speaker-row"><h1 id="speaker">СЕРЁГА</h1><span class="status">ОНЛАЙН</span></div>
+    <div class="rule"></div>
+    <div class="dialogue" id="dialogue" aria-live="polite">
+      <p>Ты проснулся?</p><p>У меня дома посторонний.</p><p>Точнее, часть постороннего. На кухонном столе, в пакете из «Дикси». Мужик какой-то. Лет тридцать.</p><p>Крови нет. Бардака нет. Дверь закрыта была. Чайник я поставил, а потом уже вспомнил, что надо кому-нибудь написать.</p><p>Ты же живой? Ответь.</p>
+    </div>
+    <div class="choice-label" id="choiceLabel">ТВОЙ ХОД</div>
+    <div class="choices" id="choices">
+      <button data-choice="photo"><span>01</span><b>Попросить фотографию</b><i>→</i></button>
+      <button data-choice="police"><span>02</span><b>Предложить вызвать полицию</b><i>→</i></button>
+      <button data-choice="details"><span>03</span><b>Спросить про обстоятельства</b><i>→</i></button>
+    </div>
+    <div class="feedback" id="feedback" hidden></div>
+    <div class="bottom-actions">
+      <button class="map-button" id="mapBtn"><span class="network-icon">⌘</span> СВЯЗИ / СЮЖЕТ</button>
+      <button id="skipBtn">↠ ПРОПУСТИТЬ ОЖИДАНИЕ</button>
+      <button id="soundBtn">◖ ЗВУК: ВЫКЛ.</button>
+    </div>
+  </section>
+  <aside class="character-rail">
+    <div class="rail-title">ТВОИ КОНТАКТЫ <span>04</span></div>
+    <button class="contact active" data-contact="ser"><div class="portrait p-ser"><span>С</span></div><b>СЕРЁГА</b><small>НОВАЯ ИНФОРМАЦИЯ</small></button>
+    <button class="contact" data-contact="val"><div class="portrait p-val"><span>В</span></div><b>ВАЛЕРИК</b><small>НЕ ПРОВЕРЕН</small></button>
+    <button class="contact" data-contact="shu"><div class="portrait p-shu"><span>Ш</span></div><b>ШУРИК</b><small>ФИЛИППИНЫ</small></button>
+    <button class="contact" data-contact="mar"><div class="portrait p-mar"><span>М</span></div><b>МАРАТ</b><small>СВОЯ ВЕРСИЯ</small></button>
+  </aside>
+</main>
+<div class="overlay" id="overlay" hidden>
+  <div class="map-modal">
+    <div class="modal-head"><div><span class="eyebrow">КАРТА ВЛИЯНИЙ</span><h2>СВЯЗИ / СЮЖЕТ</h2></div><button id="closeMap">×</button></div>
+    <p class="map-note">Линии показывают известные контакты, а не доказанный общий заговор.</p>
+    <div class="network" id="network">
+      <svg viewBox="0 0 600 340" preserveAspectRatio="none"><path d="M105 150L290 90L480 150M105 150L290 260M290 90L480 150" /><path class="dashed" d="M290 90L290 260"/></svg>
+      <div class="node n-ser"><b>СЕРЁГА</b><small>ГОЛОВА</small></div><div class="node n-val"><b>ВАЛЕРИК</b><small>КОНТАКТ</small></div><div class="node n-shu"><b>ШУРИК</b><small>ОТДЕЛЬНАЯ ЛИНИЯ</small></div><div class="node n-mar"><b>МАРАТ</b><small>ВЕРСИЯ</small></div><div class="node n-you"><b>ТЫ</b><small>ПОСРЕДНИК</small></div>
+    </div>
+    <div class="map-legend"><span><i></i> известный контакт</span><span><i class="dashed-key"></i> предположение</span></div>
+    <button class="close-wide" id="continueMap">ВЕРНУТЬСЯ К СЦЕНЕ</button>
+  </div>
+</div>
+<script src="app.js"></script>
+</body></html>
