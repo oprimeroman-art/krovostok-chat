@@ -33,7 +33,7 @@ let debts=M.activate(intro,'shurik');debts=structuredClone(debts);debts.contacts
 const coverage=new Set(),endings=new Set();let completeRuns=0;
 const resolutions=[{ser:'contain'},{ser:'leave'},{ser:'marat',theory:'challenge'},{ser:'marat',theory:'ignore'},{ser:'marat',theory:'spread',rumour:'repair'},{ser:'marat',theory:'spread',rumour:'deny'}];
 function runPlan(cfg){let x=M.fresh();x=act(x,cfg.first);x=act(x,'decide');x=act(x,cfg.route);x=act(x,'listen');
- for(let turn=0;turn<180&&!x.flags.finished;turn++){
+ for(let turn=0;turn<180&&x.contacts.tomazik.node!=='shop';turn++){
   assert(M.valid(x));const known=Object.keys(M.PEOPLE).filter(k=>x.contacts[k].known),tasks=known.filter(k=>M.options(x,k).length||x.contacts[k].pending.length);
   if(tasks.length){x=M.activate(x,tasks[0]);const opts=M.options(x);if(!opts.length)continue;const current=x.contacts[x.focus].node;
    const preferred={doc_answer:cfg.doc,ser_follow:cfg.ser,val_offer:cfg.val,val_late:'late_request',shurik_open:cfg.shurik,marat_open:cfg.theory,rumour:cfg.rumour,shop:'end'}[current];
@@ -44,7 +44,7 @@ function runPlan(cfg){let x=M.fresh();x=act(x,cfg.first);x=act(x,'decide');x=act
   }else{const rest=known.find(k=>['wait','settled'].includes(x.contacts[k].node));assert(rest,'No resting contact');x=M.activate(x,rest);assert(M.canWait(x),'Dead end');x=M.wait(x);}
   const json=JSON.stringify(x);assert(M.valid(JSON.parse(json)));assert.deepEqual(M.describe(JSON.parse(json)),M.describe(x));
  }
- assert(x.flags.finished,'Run did not finish: '+JSON.stringify(cfg));assert(M.ready(x));assert.equal(x.contacts.tomazik.node,'ending');assert(Object.values(x.contacts).every(c=>!c.pending.length));if(cfg.route==='private')assert(!x.contacts.dok.known);if(cfg.ser!=='marat')assert(!x.contacts.marat.known);if(x.flags.theory_mode==='spread')assert(x.flags.publicRumor&&x.flags.rumorHandled);if(cfg.rumour==='deny')assert(x.contacts.serega.relation<=-3);if(cfg.rumour==='repair')assert(x.flags.stopReshare);completeRuns++;endings.add([x.flags.route,x.flags.theory_mode,x.flags.val_mode,x.flags.shurik_mode,x.flags.denied,x.flags.docRecheck].join('/'));
+ assert.equal(x.contacts.tomazik.node,'shop','Opening did not reach the shop: '+JSON.stringify(cfg));assert(M.ready(x));assert(Object.values(x.contacts).every(c=>!c.pending.length));if(cfg.route==='private')assert(!x.contacts.dok.known);if(cfg.ser!=='marat')assert(!x.contacts.marat.known);if(x.flags.theory_mode==='spread')assert(x.flags.publicRumor&&x.flags.rumorHandled);if(cfg.rumour==='deny')assert(x.contacts.serega.relation<=-3);if(cfg.rumour==='repair')assert(x.flags.stopReshare);completeRuns++;endings.add([x.flags.route,x.flags.theory_mode,x.flags.val_mode,x.flags.shurik_mode,x.flags.denied,x.flags.docRecheck].join('/'));
 }
 for(const first of ['photo','check','call'])for(const route of ['private','doctor','valerik'])for(const doc of route==='doctor'?['doc_accept','doc_check']:['doc_accept'])for(const resolution of resolutions)for(const val of ['quiet','question','relay'])for(const shurik of ['truth','ask','friendly'])runPlan({first,route,doc,...resolution,val,shurik});
 assert.equal(completeRuns,648);

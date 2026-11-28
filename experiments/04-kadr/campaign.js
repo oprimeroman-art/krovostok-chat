@@ -234,7 +234,10 @@ function schedule(s,d){const p=s.campaign;p.day=d;p.between=false;let at=s.now;
 function busy(s){return Object.values(s.contacts).some(c=>c.known&&(!['settled','wait','ending'].includes(c.node)||c.pending.length));}
 function tick(s){if(!s.flags.campaign||s.flags.finished)return;if(!s.events.length&&!busy(s)){if(s.campaign.day<10)s.campaign.between=true;else{go(s,'tomazik','book:closing');s.focus='tomazik';}}}
 function go(s,k,n,at){H.unlock(s,k);H.go(s,k,n,at);}
-function receive(s,e){const id=e.node.slice(6),a=scenes[id];if(!a)return false;if(!allowed(s,a)){s.campaign.skipped.push(id);return true;}s.campaign.receipts[id]=e.at;return false;}
+function awaitingIntroduction(s,a){const gate={sonny:'vacha_notice',archive:a.id[0]==='W'?'archive_intro':null,master:'master_intro',strelok:'bar_music'}[a.who];return !!gate&&s.flags[gate]===undefined;}
+function receive(s,e){const id=e.node.slice(6),a=scenes[id];if(!a)return false;if(awaitingIntroduction(s,a)){s.campaign.deferred ||= [];if(!s.campaign.deferred.some(x=>x.node===e.node))s.campaign.deferred.push(e);return true;}if(!allowed(s,a)){s.campaign.skipped.push(id);return true;}s.campaign.receipts[id]=e.at;return false;}
+function releaseIntroductions(s){const held=s.campaign.deferred||[];s.campaign.deferred=[];for(const e of held.sort((a,b)=>a.at-b.at)){const a=scenes[e.node.slice(6)];if(awaitingIntroduction(s,a))s.campaign.deferred.push(e);else if(allowed(s,a))H.event(s,'released-'+e.id,s.now,e.who,e.node,e.label);else s.campaign.skipped.push(a.id);}}
+
 function current(s,k){const n=s.contacts[k].node;return n?.startsWith('story:')?scenes[n.slice(6)]:null;}
 function isNode(n){return n==='book:closing'||n==='book:credits'||/^reply:[A-Z]\d\d$/.test(n)&&!!scenes[n.slice(6)]||n?.startsWith('story:')&&!!scenes[n.slice(6)];}
 function resolvedCellar(f){return f.alla_final==='help'&&(f.help_route==='official'||f.cellarEnding==='report')?'alive':f.alla_final==='record'&&(f.help_route==='official'||f.cellarEnding==='report')?'unknown':'gone';}
@@ -298,7 +301,7 @@ function cleanText(text,k){text=text.replace(/Марат \(версии\)/g,'М�
 }
 function compose(s,k){const n=s.contacts[k].node,f=s.flags;
  if(n==='book:closing')return {title:'Чужая история',prose:'Воскресенье закончилось. Томазик закрыл магазин. Впервые за одиннадцать дней он звонит без просьбы.',lines:['Ты у всех что-то спрашивал. Теперь я спрошу. Телефон у тебя завтра будет включён?','Алла заходила, хлеб взяла. Сама. Без всяких новостей. Я даже рад был, что новостей нет.','Ладно. Не отвечай сразу. Ты за эти дни слишком много всем ответил.'],shot:'wide',place:'НОЧЬ / МАГАЗИН'};
- if(n==='book:credits')return {title:s.flags.finalChoice==='stay'?'На связи':s.flags.finalChoice==='archive'?'То, что осталось':'Тишина',prose:s.flags.finalChoice==='stay'?'Утро ещё не пришло. Ты положил телефон рядом.':s.flags.finalChoice==='archive'?'Записи сохранены. Лишние копии удалены. Остальное останется у тех, с кем это случилось.':'Ты выключил экран. За окном всё ещё живут люди.',lines:['ШИЛО. Чужая история.','Конец.',...epilogue(s),'История и игровая адаптация — byGagarin. По мотивам песен «Кровостока».'],shot:'wide',place:'ПОСЛЕ ПОЛУНОЧИ'};
+ if(n==='book:credits')return {title:s.flags.finalChoice==='stay'?'На связи':s.flags.finalChoice==='archive'?'То, что осталось':'Тишина',prose:s.flags.finalChoice==='stay'?'Утро ещё не пришло. Ты положил телефон рядом.':s.flags.finalChoice==='archive'?'Записи сохранены. Лишние копии удалены. Остальное останется у тех, с кем это случилось.':'Ты выключил экран. За окном всё ещё живут люди.',lines:['ШИЛО. Чужая история.','Конец.',...epilogue(s),'История и игровая адаптация — byGagarin. По мотивам песен «Кровостока».'],shot:'wide',place:'КОНЕЦ ВОСКРЕСЕНЬЯ'};
  const id=n.slice(6),a=scenes[id];if(!a)return null;
  if(n.startsWith('reply:')){const r=s.campaign.reply;return {title:a.title,prose:r?.prose||'Ответ прозвучал. Его уже не забрать.',lines:r?.lines||[],shot:a.shot,place:days[a.day]+' / '+a.place};}
  const extra=special(s,a);let lines;
@@ -308,7 +311,7 @@ function compose(s,k){const n=s.contacts[k].node,f=s.flags;
  if(id==='M12')lines=extra.map(t=>line(t)); // Only one actual outcome, never the obsolete draft's incompatible alternatives.
  if(id==='E06'&&!s.contacts.killer.known)lines=[line('Мой заказчик опять трубку оборвал. Я тебе его номер не даю, не пугайся.'),line('Андрея Коромысло ночью убил, потом спохватился про деньги. Я список достал, половину взял. Теперь считает, не продешевил ли.'),line('Я про это больше ни с кем не говорил. Других историй это не касается. Если ещё хочешь спросить — спрашивай.')];
  if(id==='E06'&&s.flags.killer_mode)lines.push(line({literal:'Вопрос получил. Повторяю: всё, что нашёл. Пусть теперь хотя бы сутки не звонит.',refuse:'Ты правильно сделал, что не стал передавать. Он с вопросами никогда не кончает.',confront:'Он мне на тебя жаловался. Сказал, слишком серьёзный. Я сказал: убей ещё кого-нибудь, может, развеселится.'}[s.flags.killer_mode]));
- if(id==='F04'&&!s.flags.docRequested)lines=[line('Серёга спросил, можно ли дать тебе номер знакомого врача. Я разрешил. Только сразу: я по трупам. Не по всему странному, что вы видите в телефоне.'),line('Если снимок найдётся и хозяин разрешит — могу посмотреть. Но не обещаю, что мертвец мне представится.')];
+ if(id==='F04'&&!s.flags.docRequested)lines=[line((f.denied?'Томазик':'Серёга')+' спросил, можно ли дать тебе номер знакомого врача. Я разрешил. Только сразу: я по трупам. Не по всему странному, что вы видите в телефоне.'),line('Если снимок найдётся и хозяин разрешит — могу посмотреть. Но не обещаю, что мертвец мне представится.')];
  if(id==='M13'&&s.contacts.sonny.known)lines.push(line(f.sleepFate==='away'?'Сказал, ушёл. Вот и всё, что я пока знаю.':f.sleepFate==='stopped'?'Сказал, что его предупреждение приняли заранее. И дверь не стала местом разборки.':'Сказал, живой. Про Вачу мне не ответил. Поеду только если сам попросит.'));
  if(id==='M13'&&!s.contacts.sonny.known)lines=[line('Не передал — я понял. Нашёл другого человека, через него предупредил. Дальше Сонный сам решал.'),line('Не знаю, прислушался ли. Со мной по-прежнему не говорит. И в этот раз я не буду звонить чужими номерами.')];
  if(id==='H09'&&s.flags.master_intro==='private')lines=[line('Старый сам мастеру позвонил. Потом мне аудио кинул. Тебе номер не давали — он помнит.'),line('Я это послушал. Старому сказал к нему одному не ехать. Если у тебя только адрес остался — передай.')];
@@ -319,7 +322,7 @@ function compose(s,k){const n=s.contacts[k].node,f=s.flags;
  if(id==='U16'&&!s.contacts.pavel.known)lines=lines.filter(x=>!x.text.includes('Павел'));
  return {title:a.title,prose:a.prose,lines:lines.map(x=>({who:x.who&&x.who!=='Система'&&x.who.replace(' (версии)','')!==H.PEOPLE[k].name?x.who.replace(' (версии)',''):undefined,text:cleanText(x.text,k)})),shot:a.shot,place:days[a.day]+' / '+a.place};
 }
-function setChoice(s,a,c){const f=s.flags;if(a.id==='K02'&&s.now>a.at+25)f.pawnLate=true;Object.assign(f,c.set);s.campaign.answers[a.id]=c.id;s.campaign.done.push(a.id);
+function setChoice(s,a,c){const f=s.flags;if(a.id==='K02'&&s.now>a.at+25)f.pawnLate=true;Object.assign(f,c.set);s.campaign.answers[a.id]=c.id;s.campaign.done.push(a.id);releaseIntroductions(s);
  const value=Object.values(c.set)[0],label=c.label;
  if(/публикац|разнести|паблик|всем|громче/i.test(label)&&!/не |без /i.test(label))f.looseCopies=(f.looseCopies||0)+1;
  if(/не передавать|сохранить|поблагодарить|поддержать|по-дружески|тепло/i.test(label))H.relation(s,a.who,1);
@@ -355,7 +358,7 @@ function options(s,k){const n=s.contacts[k].node;if(n==='book:credits')return []
  if(a.id==='K02'&&late){opts=opts.filter(c=>c.set.pawn_early!=='close');}
  if(a.id==='K08'&&s.flags.pawnFate==='avoided')opts=[{id:'A',label:'Остаться с охраной до конца смены',set:{pawn_alarm:'safe'},echo:'Не открывайте снова. Дождитесь конца смены вместе.',lines:[line('Не откроем. Один раз сегодня хватило смелости. Дальше будем скучные.')],minutes:2},{id:'B',label:'Передать приметы человека и время его прихода',set:{pawn_alarm:'services'},echo:'Запиши, когда приходил, во что одет. Передай тому, кто приехал.',lines:[line('Записала. Славик дописывает, что смотрел уверенно. Зачеркнула. Это не примета.')],minutes:5},{id:'C',label:'Позвонить Славику и поблагодарить',set:{pawn_alarm:'callguard'},echo:'Скажи Славику спасибо, раз он уже решил, что всех спас.',lines:[line('Передала. Вот теперь точно до понедельника не заткнётся.')],minutes:1}];
  if(a.id==='M04'&&s.now>=4*1440+18*60){opts=opts.filter(c=>c.set.sleep_plan==='stay');}
- return opts.map(c=>H.option('take_'+c.id,c.label,c.minutes,x=>setChoice(x,a,c),late&&['K02','M04'].includes(a.id)?'Время уже ушло.':undefined));
+ return opts.map(c=>H.option('take_'+c.id,c.label,c.minutes,x=>setChoice(x,a,c),(a.id==='K02'&&late||a.id==='M04'&&s.now>=4*1440+18*60)?'Время уже ушло.':undefined));
  }
  if(s.campaign?.between&&['settled','wait','ending'].includes(n))return [H.option('next_day','Убрать телефон до утра',Math.max(1,Math.min(...data.scenes.filter(a=>a.day===s.campaign.day+1).map(a=>a.at))-s.now),x=>schedule(x,x.campaign.day+1))];
  return null;
