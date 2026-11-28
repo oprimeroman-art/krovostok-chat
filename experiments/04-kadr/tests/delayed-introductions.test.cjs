@@ -10,7 +10,7 @@ for(const [parent,child,who,decline]of [['M03','M04','sonny','C'],['W01','W02','
   s=M.activate(s,k);s=M.act(s,'take_'+(accept?'A':decline));s=M.act(s,'leave_dialogue');
   assert(!s.campaign.deferred.some(e=>e.node==='story:'+child));
   for(let n=0;n<10&&!s.contacts[who].known;n++){const parked=Object.keys(s.contacts).find(id=>s.contacts[id].known&&['settled','wait'].includes(s.contacts[id].node));s=M.activate(s,parked);if(!M.canWait(s))break;s=M.wait(s);}
-  if(accept){assert(s.contacts[who].known,parent);assert.equal(s.contacts[who].node,'story:'+child);assert(M.options(s,who).length);assert(M.restore(JSON.parse(JSON.stringify(s))));}
+  if(accept){assert(s.contacts[who].known,parent);assert.equal(s.contacts[who].node,'story:'+child);assert(M.options(s,who).length);assert.equal(M.describe(s,who).receivedAt,C.scenes[child].at);assert(M.restore(JSON.parse(JSON.stringify(s))));}
   else{assert(!s.contacts[who].known,parent);assert(s.campaign.skipped.includes(child));}
   tested++;
  }
@@ -20,7 +20,7 @@ for(const [parent,child,who,decline]of [['M03','M04','sonny','C'],['W01','W02','
 for(const [parent,child,next,who]of [['M03','M04','M07','sonny'],['W01','W02','W06','archive'],['H01','H04','H07','master'],['R03','R04','R08','strelok']]){
  let s=structuredClone(fixtures['story:'+parent]),k=s.focus,until=C.scenes[next].at-1;
  while(s.now<until){const parked=Object.keys(s.contacts).find(id=>s.contacts[id].known&&id!==k&&['settled','wait'].includes(s.contacts[id].node));s=M.activate(s,parked);const event=M.nextEvent(s);assert(event);if(event.at>=until){s.now=until;break;}s=M.wait(s);}
- s=M.activate(s,k);s=M.act(s,'take_A');assert.equal(s.contacts[who].node,'story:'+child,parent);assert(M.valid(s));tested++;
+ s=M.activate(s,k);s=M.act(s,'take_A');assert.equal(s.contacts[who].node,'story:'+child,parent);assert.equal(M.describe(s,who).receivedAt,C.scenes[child].at);assert(M.valid(s));tested++;
 }
 console.log(JSON.stringify({passed:true,delayedIntroductions:tested}));
 // Missing an actual deadline changes available actions and consequences, without rewinding time.

@@ -235,8 +235,8 @@ function busy(s){return Object.values(s.contacts).some(c=>c.known&&(!['settled',
 function tick(s){if(!s.flags.campaign||s.flags.finished)return;if(!s.events.length&&!busy(s)){if(s.campaign.day<10)s.campaign.between=true;else{go(s,'tomazik','book:closing');s.focus='tomazik';}}}
 function go(s,k,n,at){H.unlock(s,k);H.go(s,k,n,at);}
 function awaitingIntroduction(s,a){const gate={sonny:'vacha_notice',archive:a.id[0]==='W'?'archive_intro':null,master:'master_intro',strelok:'bar_music'}[a.who];return !!gate&&s.flags[gate]===undefined;}
-function receive(s,e){const id=e.node.slice(6),a=scenes[id];if(!a)return false;if(awaitingIntroduction(s,a)){s.campaign.deferred ||= [];if(!s.campaign.deferred.some(x=>x.node===e.node))s.campaign.deferred.push(e);return true;}if(!allowed(s,a)){s.campaign.skipped.push(id);return true;}s.campaign.receipts[id]=e.at;return false;}
-function releaseIntroductions(s){const held=s.campaign.deferred||[];s.campaign.deferred=[];for(const e of held.sort((a,b)=>a.at-b.at)){const a=scenes[e.node.slice(6)];if(awaitingIntroduction(s,a))s.campaign.deferred.push(e);else if(allowed(s,a))H.event(s,'released-'+e.id,s.now,e.who,e.node,e.label);else s.campaign.skipped.push(a.id);}}
+function receive(s,e){const id=e.node.slice(6),a=scenes[id];if(!a)return false;if(awaitingIntroduction(s,a)){s.campaign.deferred ||= [];if(!s.campaign.deferred.some(x=>x.node===e.node))s.campaign.deferred.push(e);return true;}if(!allowed(s,a)){s.campaign.skipped.push(id);return true;}s.campaign.receipts[id]=e.originAt??e.at;return false;}
+function releaseIntroductions(s){const held=s.campaign.deferred||[];s.campaign.deferred=[];for(const e of held.sort((a,b)=>a.at-b.at)){const a=scenes[e.node.slice(6)];if(awaitingIntroduction(s,a))s.campaign.deferred.push(e);else if(allowed(s,a))H.event(s,'released-'+e.id,s.now,e.who,e.node,e.label,e.at);else s.campaign.skipped.push(a.id);}}
 
 function current(s,k){const n=s.contacts[k].node;return n?.startsWith('story:')?scenes[n.slice(6)]:null;}
 function isNode(n){return n==='book:closing'||n==='book:credits'||/^reply:[A-Z]\d\d$/.test(n)&&!!scenes[n.slice(6)]||n?.startsWith('story:')&&!!scenes[n.slice(6)];}
