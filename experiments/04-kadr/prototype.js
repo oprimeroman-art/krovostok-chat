@@ -1,66 +1,51 @@
-/* SHILO: isolated art approval fragment. Original story and full engine remain untouched. */
+/* Approved presentation, new scene-based opening. */
 (() => {
 'use strict';
-const $=id=>document.getElementById(id), DATA=window.SHILO_DEMO;
-const KEY='shilo-art-prototype-v1';
-const PEOPLE={
- serega:{name:'Серёга',where:'ЧЕТВЕРГ / КУХНЯ',caption:'ОБЫЧНОЕ УТРО'},
- valerik:{name:'Валерик',where:'ЧЕТВЕРГ / ГАРАЖИ',caption:'НЕНУЖНЫЕ ВОПРОСЫ'},
- shurik:{name:'Шурик',where:'ЧЕТВЕРГ / ФИЛИППИНЫ',caption:'С ДРУГОГО БЕРЕГА'},
- marat:{name:'Марат',where:'ЧЕТВЕРГ / НА ЛЕСТНИЦЕ',caption:'СЛИШКОМ МНОГО СОВПАДЕНИЙ'},
- dok:{name:'Док',where:'ЧЕТВЕРГ / ОРДИНАТОРСКАЯ',caption:'ЧУЖАЯ РАБОТА'}
-};
-let state=null,timer=null,inGame=false,sound=false,ctx=null,lastArt='';
-try{const s=JSON.parse(localStorage.getItem(KEY));if(s?.version===1&&PEOPLE[s.active]&&s.flags&&s.contacts&&Object.keys(PEOPLE).every(k=>{const c=s.contacts[k];return c&&Number.isInteger(c.index)&&c.index>=0&&c.index<DATA[k].length&&['intro','choice','reply','end'].includes(c.phase)&&Array.isArray(c.queue)&&Array.isArray(c.log)&&c.queue.every(x=>typeof x.text==='string')&&c.log.every(x=>typeof x.text==='string')}))state=s;}catch{}
-function fresh(){return {version:1,active:'serega',flags:{},contacts:Object.fromEntries(Object.keys(PEOPLE).map(k=>[k,{index:0,phase:'intro',queue:[],log:[],started:false}]))};}
+const $=id=>document.getElementById(id),M=window.SHILO_OPENING,P=M.PEOPLE,KEY='shilo-opening-v2';
+let state=null,inGame=false,sound=false,ctx=null,lastArt='',lastNotice=0,noticeTimer;
+try{const saved=JSON.parse(localStorage.getItem(KEY));if(M.valid(saved))state=saved;}catch{}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch{}}
-function beep(){if(!sound)return;try{ctx ||= new (window.AudioContext||window.webkitAudioContext)();ctx.resume();const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.setValueAtTime(390,ctx.currentTime);o.frequency.exponentialRampToValueAtTime(210,ctx.currentTime+.07);g.gain.setValueAtTime(.025,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.09);o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+.09);}catch{}}
-function current(){return state.contacts[state.active];}
-function scene(){return DATA[state.active][current().index];}
-function cleanLine(x){return {...x,text:x.kind==='media'?'На столе — пакет. Рядом кружка и хлебница.':x.text};}
-function begin(k){const c=state.contacts[k];if(c.started)return;c.started=true;const s=DATA[k][c.index];c.queue=[...s.core,...(s.variants||[]).filter(v=>Object.entries(v.when||{}).every(([f,val])=>state.flags[f]===val)).flatMap(v=>v.lines)].map(cleanLine);c.phase='intro';}
-function endQueue(){const c=current();if(c.phase==='intro')c.phase=scene().choices.length?'choice':'end';else if(c.phase==='reply')c.phase='end';}
-function addLine(){const c=current();if(!c.queue.length){endQueue();return;}const line=c.queue.shift();if(line.kind==='forward'){
- const target=Object.keys(PEOPLE).find(k=>PEOPLE[k].name===line.who);
- if(target&&target!==state.active){state.contacts[target].log.push({...line,kind:'out',text:'Переслано от '+line.from+': '+line.text});}
- else c.log.push(line);
-}else c.log.push(line);if(!c.queue.length)endQueue();beep();}
-function schedule(){clearTimeout(timer);if(!inGame||$('dialog').open||!current().queue.length)return;const next=current().queue[0];timer=setTimeout(()=>{addLine();save();render();schedule();},Math.min(3000,900+next.text.length*12));}
-function skip(){if(!inGame||$('dialog').open)return;clearTimeout(timer);while(current().queue.length)addLine();save();render();}
-function choose(i){const c=current(),s=scene();if(c.phase!=='choice'||!s.choices[i]||!inGame||$('dialog').open)return;const opt=s.choices[i];Object.assign(state.flags,opt.set);c.log.push({who:'Ты',kind:'out',text:opt.echo});c.queue=opt.lines.map(cleanLine);c.phase='reply';if(!c.queue.length)endQueue();save();render();schedule();}
-function openContact(k){if(!PEOPLE[k])return;clearTimeout(timer);state.active=k;begin(k);save();render();schedule();}
-function element(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;}
-function button(label,action,cls){const n=element('button',cls,label);n.type='button';n.onclick=action;return n;}
-function render(){const k=state.active,c=current(),s=scene(),p=PEOPLE[k];
- if(lastArt!==k){const img=$('backdrop');img.src='art/'+k+'.webp';img.style.animation='none';void img.offsetWidth;img.style.animation='';lastArt=k;}
- $('location').textContent=p.where;$('artPlace').textContent=p.caption;$('artName').textContent=p.name.toUpperCase();$('name').textContent=p.name.toUpperCase();
- $('chapter').textContent=s.title.replace(/^.*?—\s*/,'').toUpperCase();$('clock').textContent=(s.title.match(/\d\d:\d\d/)||[''])[0];
- $('hint').textContent=c.phase==='choice'?'ТЕПЕРЬ ТВОЙ ХОД':c.phase==='end'?'РАЗГОВОР ЗАТИХ':'НЕ ВСЁ НУЖНО ГОВОРИТЬ ВСЛУХ';
- const transcript=$('transcript');transcript.replaceChildren();const visible=c.log.slice(-3);
- if(!visible.length)transcript.append(element('p','earlier','Связь установлена.'));
- visible.forEach((m,i)=>{const n=element('p',m.kind==='out'?'mine':i<visible.length-1?'earlier':'',m.text);transcript.append(n);});
- $('waiting').hidden=!c.queue.length;$('skip').disabled=!c.queue.length;
- const replies=$('replies');replies.replaceChildren();if(c.phase==='choice')s.choices.forEach((o,i)=>{const b=button('',()=>choose(i),'reply');b.append(element('span','',String(i+1).padStart(2,'0')),element('span','',o.echo));replies.append(b);});
- const aft=$('aftermath');aft.replaceChildren();aft.hidden=c.phase!=='end';
- if(c.phase==='end'){
-  if(c.index<DATA[k].length-1){aft.append(element('p','','Через пятнадцать минут Серёга пишет снова.'));const b=button('',()=>{c.index++;c.started=false;begin(k);save();render();schedule();},'next');b.append(element('span','','→'),document.createTextNode('Прочитать сообщение'));aft.append(b);}
-  else{const next=Object.keys(PEOPLE).find(id=>state.contacts[id].phase!=='end');aft.append(element('p','',next?'Здесь пока всё. Остальные всё ещё на связи.':'Все пять разговоров закончены. Продолжение — после утверждения оформления.'));const b=button('',()=>next?openContact(next):goHome(),'next');b.append(element('span','','→'),document.createTextNode(next?'Ответить: '+PEOPLE[next].name:'В главное меню'));aft.append(b);}
+function node(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;}
+function button(label,fn,cls){const b=node('button',cls,label);b.type='button';b.onclick=fn;return b;}
+function beep(){if(!sound)return;try{ctx ||= new (window.AudioContext||window.webkitAudioContext)();ctx.resume();const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.setValueAtTime(390,ctx.currentTime);o.frequency.exponentialRampToValueAtTime(210,ctx.currentTime+.07);g.gain.setValueAtTime(.025,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.09);o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+.09);}catch{}}
+function setState(next){if(next===state)return;const seq=state?.seq||0;state=next;save();render();if(state.seq>seq)beep();}
+function choose(id){if(!inGame||$('dialog').open)return;const prev=state.contacts[state.focus].node;setState(M.act(state,id));if(prev!==state.contacts[state.focus].node)window.scrollTo({top:0,behavior:'instant'});}
+function activate(k){if(!inGame||$('dialog').open)return;setState(M.activate(state,k));window.scrollTo({top:0,behavior:'instant'});}
+function wait(){if(!inGame||$('dialog').open)return;setState(M.wait(state));}
+function relationLabel(c){return c.relation<=-3?'НЕ ДОВЕРЯЕТ':c.relation<0?'ОСТОРОЖЕН':c.relation>0?'ДОВЕРЯЕТ':'';}
+function statusLabel(c){if(c.pending.length)return 'НОВАЯ ИНФОРМАЦИЯ';if(c.status==='away')return 'НЕТ НА СВЯЗИ';if(c.unread)return c.status==='event'?'НОВОЕ СОБЫТИЕ':'ЕСТЬ СООБЩЕНИЕ';if(c.status==='newinfo')return 'НОВАЯ ИНФОРМАЦИЯ';if(c.status==='reply')return 'ЖДЁТ РЕШЕНИЯ';return 'ДОСТУПЕН';}
+function actionButton(o,i){const b=button('',()=>choose(o.id),'reply');b.dataset.action=o.id;b.append(node('span','',String(i+1).padStart(2,'0')));const words=node('span','action-words');words.append(node('span','',o.label));if(o.hint)words.append(node('small','action-hint',o.hint));b.append(words);if(o.minutes)b.append(node('small','action-time',o.minutes+' МИН'));return b;}
+function render(){if(!state)return;const k=state.focus,c=state.contacts[k],v=M.describe(state),p=P[k];
+ const artKey=k+'/'+v.shot;if(lastArt!==artKey){$('backdrop').src='art/'+k+'.webp';$('backdrop').style.animation='none';void $('backdrop').offsetWidth;$('backdrop').style.animation='';lastArt=artKey;}
+ $('game').dataset.shot=v.shot;$('game').dataset.person=k;
+ $('location').textContent=p.where;$('artPlace').textContent=p.caption;$('artName').textContent=p.name.toUpperCase();$('name').textContent=p.name.toUpperCase();$('chapter').textContent=v.title.toUpperCase();$('clock').textContent=M.clock(state.now);$('worldDate').textContent=M.date(state.now);
+ const transcript=$('transcript');transcript.replaceChildren();if(v.prose)transcript.append(node('p','scene-prose',v.prose));for(const line of v.lines)transcript.append(node('p','spoken',line));
+ const opts=M.options(state);$('replies').replaceChildren(...opts.map(actionButton));
+ const waiting=M.canWait(state),event=M.nextEvent(state);$('skip').disabled=!waiting;$('skip').title=waiting?'Продвинуть общее время до следующего события':'Ожидание доступно, когда текущая ситуация закончена';$('waiting').hidden=c.node!=='wait';$('waitText').textContent=waiting?'Следующее событие — не раньше '+M.clock(event.at)+'. Можно заняться другими людьми.':'Пока нет ответа.';
+ $('hint').textContent=opts.length?'ТВОЙ ХОД':waiting?'МИР НЕ ОСТАНОВИЛСЯ':'СКАЗАННОЕ ОСТАЛОСЬ В ЗАПИСЯХ';
+ const aft=$('aftermath');aft.replaceChildren();aft.hidden=opts.length>0;
+ if(!opts.length){
+  if(state.flags.finished){aft.append(node('p','',outcome()));aft.append(button('В главное меню',goHome,'next'));}
+  else{const pending=Object.keys(P).find(id=>state.contacts[id].known&&(state.contacts[id].unread||state.contacts[id].pending.length)&&id!==k)||Object.keys(P).find(id=>id!==k&&state.contacts[id].known&&M.options(state,id).length);if(pending){const b=button('',()=>activate(pending),'next');b.append(node('span','','→'),document.createTextNode('Ответить: '+P[pending].name));aft.append(b);}else if(waiting){const b=button('',wait,'next');b.append(node('span','','→'),document.createTextNode('Дождаться следующего события · '+M.clock(event.at)));aft.append(b);}else aft.append(node('p','','Пока никто не ждёт ответа. Полученное можно перечитать в записях.'));}
  }
- const rail=$('people');rail.replaceChildren();for(const [id,person]of Object.entries(PEOPLE)){
-  const v=state.contacts[id],active=id===k,b=button('',()=>openContact(id),'person'+(active?' active':''));b.setAttribute('aria-pressed',String(active));b.setAttribute('aria-label',person.name);const img=element('img');img.src='art/'+id+'-small.webp';img.alt='';const desc=element('span');desc.append(element('b','',person.name.toUpperCase()),element('small','',active?'ТЫ ЗДЕСЬ':v.phase==='end'?'ПРОЧИТАНО':v.started?'ЖДЁТ ТЕБЯ':'ЕСТЬ СООБЩЕНИЕ'));b.append(img,desc);if(!v.started)b.append(element('i','dot'));rail.append(b);
- }
+ const rail=$('people');rail.replaceChildren();const known=Object.keys(P).filter(id=>state.contacts[id].known);$('knownCount').textContent=String(known.length).padStart(2,'0');
+ for(const id of known){const person=P[id],v=state.contacts[id],b=button('',()=>activate(id),'person'+(id===k?' active':'')+(v.status==='away'?' unavailable':''));b.setAttribute('aria-label',person.name);b.setAttribute('aria-pressed',String(id===k));b.dataset.contact=id;b.dataset.status=v.status;const img=node('img');img.src='art/'+id+'-small.webp';img.alt='';const desc=node('span');desc.append(node('b','',person.name.toUpperCase()),node('small','contact-status',statusLabel(v)));const relationship=relationLabel(v);if(relationship)desc.append(node('small','relationship',relationship));b.append(img,desc);if(v.unread||v.pending.length)b.append(node('i','dot'));rail.append(b);}
+ if(innerWidth<=700){const active=rail.querySelector('.active');if(active)rail.scrollLeft=Math.max(0,active.offsetLeft-rail.offsetLeft-rail.clientWidth/2+active.clientWidth/2);}
+ const unread=state.notices.filter(n=>!n.read).length;$('eventCount').textContent=unread?String(unread):'';
+ const newest=state.notices.at(-1);if(newest&&newest.id>lastNotice){lastNotice=newest.id;const status=$('notice');status.textContent=M.clock(newest.at)+' / '+newest.text;status.hidden=false;clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>status.hidden=true,6000);}
 }
-function enter(){state ||= fresh();inGame=true;$('home').hidden=true;$('game').hidden=false;begin(state.active);save();render();schedule();window.scrollTo(0,0);$('menu').focus({preventScroll:true});}
-function goHome(){clearTimeout(timer);inGame=false;$('home').hidden=false;$('game').hidden=true;$('resume').hidden=!state;window.scrollTo(0,0);$('start').focus({preventScroll:true});}
-function closeDialog(){$('dialog').close();schedule();}
-function showDialog(title){clearTimeout(timer);$('dialogTitle').textContent=title;$('dialogBody').replaceChildren();$('dialog').showModal();}
-function startNew(){state=fresh();lastArt='';enter();}
-$('start').onclick=()=>{if(!state){startNew();return;}showDialog('НАЧАТЬ СНАЧАЛА?');$('dialogBody').append(element('p','','Текущие разговоры этого фрагмента начнутся заново.'),button('Начать сначала',()=>{$('dialog').close();startNew();},'dialog-action'),button('Вернуться',closeDialog,'dialog-action'));};
-$('resume').hidden=!state;$('resume').onclick=enter;$('menu').onclick=goHome;$('skip').onclick=skip;
+function outcome(){const f=state.flags,parts=[];parts.push(f.publicRumor?'Снимок оказался у посторонних.':f.maratRequested?'Снимок увидел ещё один человек; дальше он не пошёл.':f.route==='private'?'Находка осталась между тобой и Серёгой.':'Снимок остался в ограниченном кругу.');if(f.denied)parts.push('Серёга перестал отвечать.');else if(f.repair)parts.push('Серёга услышал признание, но копии уже не вернуть.');else if(state.contacts.serega.relation>0)parts.push('Серёга продолжает доверять тебе.');parts.push(f.val_mode==='question'?'Ты узнал об Андрее — другом погибшем.':f.val_mode==='late'||f.val_mode==='missed'?'Разговорить Валерика вовремя не удалось.':'Валерик сохранил подробности при себе.');return parts.join(' ');}
+function enter(){state ||= M.fresh();inGame=true;$('home').hidden=true;$('game').hidden=false;lastNotice=state.seq;render();save();window.scrollTo(0,0);$('menu').focus({preventScroll:true});}
+function goHome(){inGame=false;$('home').hidden=false;$('game').hidden=true;$('resume').hidden=!state;$('notice').hidden=true;clearTimeout(noticeTimer);window.scrollTo(0,0);$('start').focus({preventScroll:true});}
+function show(title){$('dialogTitle').textContent=title;$('dialogBody').replaceChildren();$('dialog').showModal();}
+function close(){$('dialog').close();}
+function startNew(){state=M.fresh();lastArt='';lastNotice=0;enter();}
+$('start').onclick=()=>{if(!state){startNew();return;}show('НАЧАТЬ СНАЧАЛА?');$('dialogBody').append(node('p','','Решения и записи этого фрагмента будут сброшены.'),button('Начать сначала',()=>{close();startNew();},'dialog-action'),button('Вернуться',close,'dialog-action'));};
+$('resume').hidden=!state;$('resume').onclick=enter;$('menu').onclick=goHome;$('skip').onclick=wait;
 $('sound').onclick=()=>{sound=!sound;$('sound').textContent='ЗВУК: '+(sound?'ВКЛ':'ВЫКЛ');$('sound').setAttribute('aria-pressed',String(sound));beep();};
-$('historyBtn').onclick=()=>{showDialog('РАЗГОВОР / '+PEOPLE[state.active].name.toUpperCase());if(!current().log.length)$('dialogBody').append(element('p','','Пока ни слова.'));for(const m of current().log){const n=element('p',m.kind==='out'?'log-mine':'');n.append(element('time','',m.kind==='out'?'ТЫ':m.who),document.createTextNode(m.text));$('dialogBody').append(n);}};
-$('aboutBtn').onclick=()=>{showDialog('ЧУЖАЯ ИСТОРИЯ.');for(const t of ['Обычный четверг. Серёга нашёл на кухне то, чего там быть не должно. Валерик занят чужими проблемами. Шурик далеко, но всё ещё помнит старые долги.','Пять людей. Несколько разговоров. Ты выбираешь, кому ответить и что сказать. Не каждое совпадение — часть заговора.','Это короткий игровой фрагмент для оценки оформления. В нём использованы оригинальные диалоги из существующего сценария. Полная история здесь пока не подключена.','Управление: выбери контакт справа. Ответы — мышью или клавишами 1–3. Пробел пропускает ожидание. Разговор можно перечитать целиком. На телефоне контакты находятся над текстом.'])$('dialogBody').append(element('p','',t));};
-$('closeDialog').onclick=closeDialog;$('dialog').addEventListener('close',schedule);$('dialog').addEventListener('click',e=>{if(e.target===$('dialog')){const r=$('dialog').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeDialog();}});
-document.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey||!inGame||$('dialog').open||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))return;if(e.code==='Space'){e.preventDefault();skip();}if(['1','2','3'].includes(e.key)){e.preventDefault();choose(Number(e.key)-1);}if(e.key==='Escape')goHome();});
-// The artwork is loaded locally; there are no analytics or third-party runtime calls.
+$('historyBtn').onclick=()=>{show('ЗАПИСИ / '+M.clock(state.now));const body=$('dialogBody'),facts=node('section','notebook');facts.append(node('h3','','ИЗВЕСТНОЕ И ВЕРСИИ'));if(!state.facts.length)facts.append(node('p','','Пока записывать нечего.'));for(const f of state.facts){const p=node('p','fact');p.append(node('time','',M.clock(f.at)+' / '+f.source+' / '+({known:'ИЗВЕСТНО',claim:'СО СЛОВ',hypothesis:'ВЕРСИЯ'}[f.kind])),node('b','',f.title),node('span','',f.text));facts.append(p);}body.append(facts);for(const [k,c]of Object.entries(state.contacts)){if(!c.known||!c.history.length)continue;const block=node('details','history-contact');block.open=k===state.focus;block.append(node('summary','',P[k].name.toUpperCase()));for(const e of c.history){const p=node('div',e.choice?'log-mine':'log-entry');p.append(node('time','',M.clock(e.at)+(e.receivedAt!==undefined&&e.receivedAt!==e.at?' / ПОЛУЧЕНО '+M.clock(e.receivedAt):'')+(e.choice?' / ТВОЁ ДЕЙСТВИЕ':' / '+e.title)));if(e.choice)p.append(node('p','',e.choice));else{p.append(node('p','scene-prose',e.prose));for(const line of e.lines)p.append(node('p','',line));}block.append(p);}body.append(block);}};
+$('eventsBtn').onclick=()=>{show('ЧЕТВЕРГ / СОБЫТИЯ');const body=$('dialogBody');if(!state.notices.length)body.append(node('p','','Пока только одно чужое утро.'));for(const e of [...state.notices].reverse()){const p=node('p','event-entry');p.append(node('time','',M.clock(e.at)),node('span','',e.text));if(state.contacts[e.who]?.known)p.append(button('К '+P[e.who].name,()=>{close();activate(e.who);},'event-link'));body.append(p);e.read=true;}save();$('eventCount').textContent='';};
+$('aboutBtn').onclick=()=>{show('ЧУЖАЯ ИСТОРИЯ.');for(const text of ['Четверг, шестое. Серёга нашёл на кухне то, чего там быть не должно. Теперь важно не только что ты скажешь, но и кому это станет известно.','Действия занимают игровое время. Переключение людей и чтение записей его не тратят. Пока ты занимаешься одним делом, может прийти другое событие. Ожидание можно пропустить, когда текущая ситуация закончена.','Ответы — мышью или клавишами 1–4. Пробел — дождаться следующего события. Справа находятся только уже известные люди. «Записи» хранят прошлое; переключение контакта не открывает будущие события.','В основе — «Голова», «Коромысло», «Шурик», «Патологоанатом», «Подозрение» и мотив следующей истории «Летом». Серёга, Док и Марат — игровые имена безымянных рассказчиков. Их знакомства, сообщения игроку и хронология этого утра придуманы для игры.','Слова персонажа не всегда факт. Неизвестный из пакета не объявлен Дроном или Андреем Коромыслом. Долги Шурика не приравнены к выкупу Шомпола. Три исходных досье от 19 ноября 2026 года перечислены в документации проекта.','Здесь закончено только начало. После вопроса Томазика фрагмент останавливается. Остальные 144 сцены ещё не перенесены в новую подачу.'])$('dialogBody').append(node('p','',text));};
+$('closeDialog').onclick=close;$('dialog').addEventListener('click',e=>{if(e.target===$('dialog')){const r=$('dialog').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)close();}});
+document.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey||!inGame||$('dialog').open||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))return;if(e.code==='Space'){e.preventDefault();wait();}if(/^[1-4]$/.test(e.key)){const o=M.options(state)[Number(e.key)-1];if(o){e.preventDefault();choose(o.id);}}if(e.key==='Escape')goHome();});
 })();
