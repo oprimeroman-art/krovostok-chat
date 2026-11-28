@@ -26,9 +26,12 @@ function paint(){const {w,h}=dimensions;if(!w||!h)return;const seed=nameSeed(sel
   ctx.fillStyle=c.accent;ctx.fillRect(0,h-8,Math.max(16,w*.13),8);
 }
 function words(v){return String(v||'').replace(/\[фото:[^\]]+\]/gi,'Фотография').trim()}
+function portraitClass(name){if(name==='Серёга')return'portrait-ser';if(name==='Валерик')return'portrait-val';if(name==='Шурик')return'portrait-shu';if(name.includes('Марат'))return'portrait-mar';return'portrait-unknown'}
+function updateHero(name){const hero=E('heroPortrait');if(!hero)return;hero.className='hero-portrait '+portraitClass(name);E('portraitName').textContent=String(name||'').toUpperCase();}
+function renderContacts(state,scene){const rail=E('contactRail');if(!rail)return;rail.replaceChildren();const names=[...new Set([state.active,scene.chat,...state.messages.slice(-30).reverse().map(m=>m.chat)])].filter(Boolean).slice(0,4);for(const name of names){const b=document.createElement('button');b.type='button';b.className='contact-card'+(name===state.active?' active':'');const art=document.createElement('span');art.className='portrait-mini '+portraitClass(name);const label=document.createElement('b');label.textContent=name.toUpperCase();const meta=document.createElement('small');meta.textContent=state.unread?.[name]?'ЕСТЬ НОВОЕ':(name===state.active?'ТЫ ЗДЕСЬ':'ЗНАКОМЫЙ ГОЛОС');b.append(art,label,meta);b.addEventListener('click',()=>window.KROVO_DEBUG?.open(name));rail.append(b)}}
 function render(){const api=window.KROVO_DEBUG;if(!api)return;const state=api.getState(),scene=window.KROVO_STORY.scenes[state.scene];if(!scene)return;
  const chat=state.active||scene.chat,related=state.messages.filter(m=>m.chat===chat&&m.type!=='sys');const current=related[related.length-1],prev=related[related.length-2];
- if(selected!==chat){selected=chat;tone=colorFor(chat);E('backgroundWord').textContent=chat.toUpperCase();paint();}
+ if(selected!==chat){selected=chat;tone=colorFor(chat);E('backgroundWord').textContent=chat.toUpperCase();paint();}updateHero(chat);renderContacts(state,scene);
  E('chapter').textContent=(scene.title||'').replace(/\\s+/g,' ').toUpperCase();
  E('speaker').textContent=current?.mine?'ВЫ':(current?.who||chat);
  E('clock').textContent=current?.time||'';
@@ -37,7 +40,7 @@ function render(){const api=window.KROVO_DEBUG;if(!api)return;const state=api.ge
  if(current?.type==='forward'){E('speaker').textContent='ПЕРЕСЛАНО · '+(current.forwardedFrom||chat)}
  const previousText=prev&&prev.text?words(prev.text):'';
  E('previous').textContent=previousText.length>135?previousText.slice(0,135)+'…':previousText;
- E('count').textContent=String(state.scene+1).padStart(2,'0')+' / '+window.KROVO_STORY.scenes.length;
+ E('count').textContent='ЧУЖАЯ ИСТОРИЯ';
  const typing=state.stage==='intro'||state.stage==='reply'||state.stage==='transition';E('stageTyping').hidden=!typing;
  E('prompt').textContent=state.stage==='choice'&&state.active===scene.chat?'ТВОЙ ХОД':state.stage==='ended'?'ИСТОРИЯ ЗАВЕРШЕНА':state.stage==='choice'?'ОТКРОЙ ДИАЛОГ: '+scene.chat:'СЛУШАЙ';
  const choices=E('choices');choices.replaceChildren();
@@ -48,7 +51,7 @@ function render(){const api=window.KROVO_DEBUG;if(!api)return;const state=api.ge
  if(current?.type==='media'&&E('photoCover').hidden){E('line').style.cursor='pointer'}else E('line').style.cursor='auto';
 }
 function renderNames(state,scene){const api=window.KROVO_DEBUG,list=E('names');list.replaceChildren();const names=[...new Set([...state.messages.map(m=>m.chat),...Object.keys(state.unread||{}),state.active,scene.chat])].filter(Boolean);names.sort((a,b)=>{const n=(state.unread[b]||0)-(state.unread[a]||0);if(n)return n;const last=n=>state.messages.filter(m=>m.chat===n).at(-1)?.id||0;return last(b)-last(a)});
- for(const name of names){const b=document.createElement('button');b.type='button';b.className='name'+(name===state.active?' current':'');const label=document.createElement('span');label.textContent=name;const count=document.createElement('small');count.textContent=state.unread[name]||'';b.append(label,count);b.addEventListener('click',()=>{api.open(name);E('archive').hidden=true});list.append(b)}
+ for(const name of names){const b=document.createElement('button');b.type='button';b.className='name'+(name===state.active?' current':'');const art=document.createElement('span');art.className='archive-portrait '+portraitClass(name);const label=document.createElement('span');label.textContent=name;const count=document.createElement('small');count.textContent=state.unread[name]||'';b.append(art,label,count);b.addEventListener('click',()=>{api.open(name);E('archive').hidden=true});list.append(b)}
 }
 function toggleArchive(){const open=E('archive').hidden;E('archive').hidden=!open;if(open){const api=window.KROVO_DEBUG;if(api){const s=api.getState();renderNames(s,window.KROVO_STORY.scenes[s.scene])}}}
 E('archiveBtn').addEventListener('click',toggleArchive);E('closeArchive').addEventListener('click',()=>E('archive').hidden=true);
